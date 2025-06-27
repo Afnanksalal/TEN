@@ -4,7 +4,6 @@ pydantic
 python-dotenv
 redis
 aiohttp
-nltk
 pydantic-settings
 google-generativeai
 google-search-results
