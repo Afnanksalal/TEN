@@ -1,0 +1,41 @@
+{
+    "rules_description": "This file can define parameters or rules for risk assessment. The current RiskAnalyzerService uses hardcoded logic, but could be refactored to read these rules dynamically.",
+    "risk_factor_weights": {
+      "market_size_usd": {
+        "high_risk_threshold": 500000000,
+        "medium_risk_threshold": 1000000000,
+        "high_risk_score_contribution": 30,
+        "medium_risk_score_contribution": 15,
+        "low_risk_score_contribution": 5
+      },
+      "founder_experience_years": {
+        "high_risk_threshold": 2,
+        "medium_risk_threshold": 5,
+        "high_risk_score_contribution": 25,
+        "medium_risk_score_contribution": 10,
+        "low_risk_score_contribution": 3
+      },
+      "initial_funding_needed_usd": {
+        "high_risk_threshold": 1000000,
+        "medium_risk_threshold": 200000,
+        "high_risk_score_contribution": 20,
+        "medium_risk_score_contribution": 10,
+        "low_risk_score_contribution": 5
+      }
+    },
+    "overall_risk_score_normalization_max": 75,
+    "example_additional_rules": [
+      {
+        "name": "Competitive Landscape Risk",
+        "condition_desc": "If 'number_of_competitors' > 5 and 'competitive_advantage_strength' is 'low'",
+        "risk_level": "high",
+        "mitigation": "Clearly define your unique selling proposition and differentiation strategy."
+      },
+      {
+        "name": "Technology Feasibility Risk",
+        "condition_desc": "If 'technology_readiness_level' is 'concept' and 'no_technical_co_founder'",
+        "risk_level": "high",
+        "mitigation": "Secure technical expertise or develop a robust MVP."
+      }
+    ]
+  }

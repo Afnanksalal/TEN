@@ -1,0 +1,47 @@
+[
+    {
+      "id": "inv_001",
+      "name": "Alpha AI Ventures",
+      "risk_tolerance": "high",
+      "preferred_industries": ["AI", "SaaS", "DeepTech", "FinTech"],
+      "min_investment_usd": 750000,
+      "max_investment_usd": 7000000,
+      "feedback_focus": ["team", "technology_innovation", "market_disruption", "scalability"]
+    },
+    {
+      "id": "inv_002",
+      "name": "Sustainable Growth Capital",
+      "risk_tolerance": "medium",
+      "preferred_industries": ["HealthTech", "EdTech", "Clean Energy", "Sustainable Ag"],
+      "min_investment_usd": 200000,
+      "max_investment_usd": 3000000,
+      "feedback_focus": ["market_validation", "business_model_sustainability", "user_adoption"]
+    },
+    {
+      "id": "inv_003",
+      "name": "Community Impact Fund",
+      "risk_tolerance": "low",
+      "preferred_industries": ["Local Services", "Community Tech", "Social Enterprise"],
+      "min_investment_usd": 50000,
+      "max_investment_usd": 500000,
+      "feedback_focus": ["community_benefit", "proven_demand", "local_market_fit"]
+    },
+    {
+      "id": "inv_004",
+      "name": "Early-Stage Innovators LLC",
+      "risk_tolerance": "high",
+      "preferred_industries": ["AI", "Blockchain", "AR/VR", "SpaceTech"],
+      "min_investment_usd": 100000,
+      "max_investment_usd": 2000000,
+      "feedback_focus": ["novelty", "technical_feasibility", "visionary_founders"]
+    },
+    {
+      "id": "inv_005",
+      "name": "Traditional Tech Angels",
+      "risk_tolerance": "medium",
+      "preferred_industries": ["SaaS", "eCommerce", "Cybersecurity", "FinTech"],
+      "min_investment_usd": 300000,
+      "max_investment_usd": 4000000,
+      "feedback_focus": ["revenue_potential", "competitive_advantage", "operational_efficiency"]
+    }
+  ]

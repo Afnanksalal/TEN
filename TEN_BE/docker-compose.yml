@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+    depends_on:
+      - redis
+    # For live reloading during development (remove for production)
+    volumes:
+      - ./app:/app/app
+      - ./requirements.txt:/app/requirements.txt
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
