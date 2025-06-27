@@ -1,7 +1,7 @@
 import json
 from typing import List, Dict, Any
 import redis.asyncio as redis
-from app.models.schemas import RiskInput, RiskOutput, RiskFactor # Assuming your models are in app.models.schemas
+from app.models.schemas import RiskInput, RiskOutput, RiskFactor
 import hashlib
 import google.generativeai as genai
 import asyncio
@@ -20,7 +20,6 @@ class RiskAnalyzerService:
             print(f"Cache hit for risk analysis: {cache_key}")
             return RiskOutput.parse_raw(cached_result_json)
 
-        # Build the prompt with conditional inclusion of optional fields
         prompt_parts = [
             f"Analyze the following startup's profile and identify its key risk factors, assign a severity level (low, medium, high) to each, and provide actionable mitigation suggestions. Finally, give an overall risk score (0-100, where 100 is extremely high risk) and general recommendations. Be very critical and realistic.\n",
             f"Startup Name: {input_data.startup_name}",
