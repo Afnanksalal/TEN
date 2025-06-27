@@ -3,7 +3,6 @@ from typing import Awaitable
 import redis.asyncio as redis
 import google.generativeai as genai
 
-# Import all service classes
 from app.core.redis import get_redis_client
 from app.core.gemini_client import get_gemini_model
 from app.services.risk_analyzer import RiskAnalyzerService
@@ -14,7 +13,6 @@ from app.services.competitor_radar import CompetitorRadarService
 from app.services.traction_estimator import TractionEstimatorService
 from app.services.buzz_builder import BuzzBuilderService
 from app.services.legal_advisor import LegalAdvisorService
-# NEW IMPORTS
 from app.services.exit_strategy_explorer import ExitStrategyExplorerService
 from app.services.talent_navigator import TalentNavigatorService
 
@@ -70,14 +68,12 @@ async def get_legal_advisor_service(
 ) -> LegalAdvisorService: 
     return LegalAdvisorService(redis_client=redis_client, gemini_model=gemini_model)
 
-# NEW DEPENDENCY FOR EXIT STRATEGY EXPLORER SERVICE
 async def get_exit_strategy_explorer_service(
     redis_client: redis.Redis = Depends(get_redis_dependency),
     gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> ExitStrategyExplorerService:
     return ExitStrategyExplorerService(redis_client=redis_client, gemini_model=gemini_model)
 
-# NEW DEPENDENCY FOR TALENT NAVIGATOR SERVICE
 async def get_talent_navigator_service(
     redis_client: redis.Redis = Depends(get_redis_dependency),
     gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
