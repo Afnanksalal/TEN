@@ -7,6 +7,8 @@
 
 **TEN** is a comprehensive AI-powered platform designed for early-stage startup founders who need clarity, direction, and actionable insights while building their companies. It consolidates critical startup intelligence into a single, intuitive platform that actually helps founders make informed decisions.
 
+![TEN Banner](https://github.com/Afnanksalal/TEN/blob/main/banner.png?raw=true)
+
 ## 🌟 Live Platform
 
 **Try TEN:** [https://ten-be.koyeb.app](https://ten-be.koyeb.app)
