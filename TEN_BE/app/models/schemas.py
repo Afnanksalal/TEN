@@ -1,12 +1,36 @@
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, HttpUrl, Field, validator
 from typing import List, Optional, Dict, Any
 
 class RiskInput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup.")
     industry: str = Field(..., description="Primary industry of the startup (e.g., 'AI', 'HealthTech').")
+    specific_product_service: str = Field(..., min_length=10, description="A brief description of the specific product or service the startup offers (e.g., 'AI-powered diagnostic tool for rare diseases', 'IoT sensors for smart home automation', 'SaaS platform for small business accounting').")
     market_size_usd: int = Field(..., gt=0, description="Estimated total addressable market (TAM) in USD.")
     founder_experience_years: int = Field(..., ge=0, description="Years of relevant experience of the primary founder/CEO.")
     initial_funding_needed_usd: int = Field(..., gt=0, description="Initial capital sought by the startup in USD.")
+
+    # NEW OPTIONAL FIELDS FOR ENHANCED RISK ANALYSIS
+    has_mvp: Optional[bool] = Field(None, description="Does the startup currently have a Minimum Viable Product (MVP) developed?")
+    mvp_stage_description: Optional[str] = Field(None, description="If MVP exists, briefly describe its current functionality and user engagement (e.g., 'basic functionality, 50 beta users', 'core features, 10 paying customers').", min_length=10)
+    
+    intellectual_property_status: Optional[str] = Field(None, description="Status of intellectual property (e.g., 'patent filed', 'trademark pending', 'trade secrets', 'none').")
+    
+    regulatory_environment: Optional[str] = Field(None, description="Describes the typical regulatory hurdles in the startup's domain (e.g., 'heavily regulated (e.g., FDA)', 'moderately regulated (e.g., data privacy)', 'lightly regulated').")
+    
+    # Financials (simple indicators for early stage)
+    burn_rate_usd_per_month: Optional[int] = Field(None, ge=0, description="Estimated monthly burn rate in USD.")
+    runway_months: Optional[int] = Field(None, ge=0, description="Estimated months of runway with current funds.")
+
+    # Competitive Landscape
+    num_direct_competitors: Optional[int] = Field(None, ge=0, description="Estimated number of direct competitors.")
+    competitive_advantage: Optional[str] = Field(None, description="Briefly describe the startup's main competitive advantage (e.g., 'proprietary tech', 'first-mover', 'strong network effects').", min_length=10)
+
+    # Validate that mvp_stage_description is provided if has_mvp is True
+    @validator('mvp_stage_description', pre=True, always=True)
+    def check_mvp_description_if_has_mvp(cls, v, values):
+        if values.get('has_mvp') is True and (v is None or not v.strip()):
+            raise ValueError('mvp_stage_description must be provided if has_mvp is True')
+        return v
 
 class RiskFactor(BaseModel):
     name: str = Field(..., description="Name of the risk factor (e.g., 'Market Size', 'Team Experience').")
@@ -73,7 +97,7 @@ class PitchFeedbackResponse(BaseModel):
     feedback: List[str] = Field(..., description="General feedback points on the pitch.")
     suggestions_for_improvement: List[str] = Field(..., description="Actionable suggestions to improve the pitch.")
 
-# --- NEW: Legal Assistance Models ---
+# --- Legal Assistance Models ---
 
 class LegalAssistanceInput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup.")
