@@ -3,7 +3,6 @@ from app.models.schemas import RiskInput, RiskOutput
 from app.services.risk_analyzer import RiskAnalyzerService
 from app.core.dependencies import get_risk_analyzer_service
 
-# Initialize FastAPI APIRouter
 router = APIRouter()
 
 @router.post(
@@ -35,7 +34,6 @@ async def analyze_risk_route(
         result = await analyzer_service.analyze_risk(input_data)
         return result
     except Exception as e:
-        # Log the error for debugging purposes in a real application
         print(f"Error in analyze_risk_route: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
