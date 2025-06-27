@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request, status, Depends
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.v1.routers import (
     risk,
     reputation,
@@ -29,6 +31,14 @@ app = FastAPI(
     description="An AI-powered platform to assist first-time entrepreneurs with risk assessment, reputation analysis, and investor matching.",
     docs_url="/docs",
     redoc_url="/redoc"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
