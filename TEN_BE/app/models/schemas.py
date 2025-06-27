@@ -223,8 +223,6 @@ class ExitStrategyExplorerInput(BaseModel):
     industry: str = Field(..., description="Industry of the startup.")
     business_model_summary: str = Field(..., min_length=50, description="A summary of the startup's business model.")
     funding_stage: str = Field(..., description="Current funding stage (e.g., 'seed', 'Series A').")
-    
-    # NEW OPTIONAL PARAMETERS
     current_revenue_usd: Optional[float] = Field(None, ge=0.0, description="Current annual or monthly recurring revenue in USD.")
     monthly_active_users: Optional[int] = Field(None, ge=0, description="Current Monthly Active Users (MAU) for digital products.")
     competitive_landscape_summary: Optional[str] = Field(None, min_length=20, description="A brief summary of the competitive landscape and the startup's position.")
