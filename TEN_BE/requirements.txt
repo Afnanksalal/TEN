@@ -7,3 +7,4 @@ aiohttp
 pydantic-settings
 google-generativeai
 google-search-results
+fastapi-limiter[redis]
