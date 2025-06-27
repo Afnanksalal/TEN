@@ -1,6 +1,8 @@
 from pydantic import BaseModel, HttpUrl, Field, validator
 from typing import List, Optional, Dict, Any
 
+# --- 1. Risk Assessment Models ---
+
 class RiskInput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup.")
     industry: str = Field(..., description="Primary industry of the startup (e.g., 'AI', 'HealthTech').")
@@ -9,7 +11,6 @@ class RiskInput(BaseModel):
     founder_experience_years: int = Field(..., ge=0, description="Years of relevant experience of the primary founder/CEO.")
     initial_funding_needed_usd: int = Field(..., gt=0, description="Initial capital sought by the startup in USD.")
 
-    # NEW OPTIONAL FIELDS FOR ENHANCED RISK ANALYSIS
     has_mvp: Optional[bool] = Field(None, description="Does the startup currently have a Minimum Viable Product (MVP) developed?")
     mvp_stage_description: Optional[str] = Field(None, description="If MVP exists, briefly describe its current functionality and user engagement (e.g., 'basic functionality, 50 beta users', 'core features, 10 paying customers').", min_length=10)
     
@@ -17,15 +18,12 @@ class RiskInput(BaseModel):
     
     regulatory_environment: Optional[str] = Field(None, description="Describes the typical regulatory hurdles in the startup's domain (e.g., 'heavily regulated (e.g., FDA)', 'moderately regulated (e.g., data privacy)', 'lightly regulated').")
     
-    # Financials (simple indicators for early stage)
     burn_rate_usd_per_month: Optional[int] = Field(None, ge=0, description="Estimated monthly burn rate in USD.")
     runway_months: Optional[int] = Field(None, ge=0, description="Estimated months of runway with current funds.")
 
-    # Competitive Landscape
     num_direct_competitors: Optional[int] = Field(None, ge=0, description="Estimated number of direct competitors.")
     competitive_advantage: Optional[str] = Field(None, description="Briefly describe the startup's main competitive advantage (e.g., 'proprietary tech', 'first-mover', 'strong network effects').", min_length=10)
 
-    # Validate that mvp_stage_description is provided if has_mvp is True
     @validator('mvp_stage_description', pre=True, always=True)
     def check_mvp_description_if_has_mvp(cls, v, values):
         if values.get('has_mvp') is True and (v is None or not v.strip()):
@@ -42,6 +40,9 @@ class RiskOutput(BaseModel):
     overall_risk_score: float = Field(..., ge=0, le=100, description="An overall risk score for the startup (0-100, higher is riskier).")
     risk_factors: List[RiskFactor] = Field(..., description="Detailed breakdown of identified risk factors.")
     recommendations: List[str] = Field(..., description="General recommendations based on the overall risk profile.")
+
+
+# --- 2. Reputation Analysis Models ---
 
 class ReputationInput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup.")
@@ -80,7 +81,6 @@ class InvestorMatchInput(BaseModel):
     risk_profile: RiskOutput = Field(..., description="The full risk assessment output for the startup.")
     reputation_profile: ReputationOutput = Field(..., description="The full reputation analysis output for the startup.")
 
-# InvestorMatchOutput MUST be defined before PitchFeedbackRequest
 class InvestorMatchOutput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup for which matches were found.")
     matched_investors: List[MatchDetail] = Field(..., description="A list of potential investor matches, ordered by match score.")
@@ -97,8 +97,75 @@ class PitchFeedbackResponse(BaseModel):
     feedback: List[str] = Field(..., description="General feedback points on the pitch.")
     suggestions_for_improvement: List[str] = Field(..., description="Actionable suggestions to improve the pitch.")
 
-# --- Legal Assistance Models ---
+# --- 4. Competitor Radar Models ---
+class CompetitorRadarInput(BaseModel):
+    startup_name: str = Field(..., description="Your startup's name.")
+    your_industry: str = Field(..., description="Your primary industry for context.")
+    # NEW FIELD
+    your_product_service_description: str = Field(..., min_length=20, description="A brief description of your startup's core product or service for better competitor identification.")
+    
+class CompetitorInfo(BaseModel):
+    name: str = Field(..., description="Competitor's name.")
+    website: Optional[HttpUrl] = Field(None, description="Competitor's website URL.")
+    product_description: Optional[str] = Field(None, description="AI-extracted brief description of competitor's product/service.") # NEW FIELD
+    value_proposition: Optional[str] = Field(None, description="AI-extracted key value proposition of the competitor.") # NEW FIELD
+    target_market: Optional[str] = Field(None, description="AI-extracted target market of the competitor.") # NEW FIELD
+    funding_rounds: List[str] = Field(..., description="Recent funding rounds detected (e.g., 'Series A: $5M from XYZ Ventures').")
+    press_mentions_summary: List[str] = Field(..., description="Key press mentions or recent news headlines/summaries.")
+    hiring_surge_indication: str = Field(..., description="AI assessment of hiring activity (e.g., 'High', 'Medium', 'Low', 'No indication').")
+    overall_summary: str = Field(..., description="AI-generated brief summary of the competitor's recent activity.")
 
+class CompetitorRadarOutput(BaseModel):
+    startup_name: str = Field(..., description="Your startup's name as input.")
+    tracked_competitors: List[CompetitorInfo] = Field(..., description="List of tracked competitors with relevant intelligence.")
+    general_market_trends: List[str] = Field(..., description="AI-generated general market trends based on competitor activity.")
+
+
+# --- 5. Traction Estimator Models ---
+class TractionEstimatorInput(BaseModel):
+    startup_name: str = Field(..., description="Your startup's name.")
+    your_industry: str = Field(..., description="Your primary industry (e.g., 'SaaS', 'eCommerce').")
+    monthly_active_users: Optional[int] = Field(None, ge=0, description="Current Monthly Active Users (MAU).")
+    monthly_recurring_revenue_usd: Optional[float] = Field(None, ge=0.0, description="Current Monthly Recurring Revenue (MRR) in USD.")
+    customer_acquisition_cost_usd: Optional[float] = Field(None, ge=0.0, description="Customer Acquisition Cost (CAC) in USD.")
+    customer_lifetime_value_usd: Optional[float] = Field(None, ge=0.0, description="Customer Lifetime Value (LTV) in USD.")
+    churn_rate_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Monthly churn rate in percentage (0-100).")
+    conversion_rate_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Conversion rate from lead to customer in percentage.")
+
+class TractionBenchmark(BaseModel):
+    metric: str = Field(..., description="Metric being benchmarked.")
+    your_value: Optional[float] = Field(None, description="Your startup's value for this metric.")
+    industry_average: Optional[float] = Field(None, description="Simulated industry average for this metric.")
+    comparison: str = Field(..., description="AI comparison of your value vs. industry average (e.g., 'Above average', 'Below average').")
+
+class TractionEstimatorOutput(BaseModel):
+    startup_name: str = Field(..., description="Your startup's name as input.")
+    growth_health_score: float = Field(..., ge=0, le=100, description="AI-generated score (0-100) indicating the overall health of your growth metrics.")
+    benchmarks: List[TractionBenchmark] = Field(..., description="Comparison of your metrics against simulated industry benchmarks.")
+    ai_insights: List[str] = Field(..., description="AI-generated insights and tips for improving traction.")
+
+# --- 6. Buzz Builder Models ---
+class BuzzBuilderInput(BaseModel):
+    startup_name: str = Field(..., description="Your startup's name.")
+    your_industry: str = Field(..., description="Your primary industry for context.")
+    current_milestones: List[str] = Field(..., description="Recent achievements or updates (e.g., 'Launched MVP', 'Secured 1000 users', 'Raised seed round').")
+    key_message: str = Field(..., description="The main message or narrative you want to convey.")
+    target_audience: str = Field(..., description="Who you are trying to reach (e.g., 'early adopters', 'investors', 'potential hires').")
+
+class SocialPostSuggestion(BaseModel):
+    platform: str = Field(..., description="Suggested platform (e.g., 'Twitter Thread', 'LinkedIn Post', 'Blog Post Idea').")
+    title: str = Field(..., description="A compelling title or thread starter.")
+    content_points: List[str] = Field(..., description="Key bullet points or paragraphs for the content.")
+    hashtags: List[str] = Field(..., description="Relevant hashtags.")
+    call_to_action: str = Field(..., description="Suggested call to action.")
+
+class BuzzBuilderOutput(BaseModel):
+    startup_name: str = Field(..., description="Your startup's name as input.")
+    suggestions: List[SocialPostSuggestion] = Field(..., description="List of generated content suggestions for various platforms.")
+    ai_tips: List[str] = Field(..., description="AI-generated tips for maximizing buzz.")
+
+
+# --- 7. Legal Assistance Models ---
 class LegalAssistanceInput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup.")
     industry: str = Field(..., description="Primary industry of the startup (e.g., 'Food Tech', 'SaaS', 'FinTech').")
@@ -130,3 +197,9 @@ class LegalAssistanceOutput(BaseModel):
     industry_licenses_certs: List[LicenseCertification] = Field(..., description="List of industry-specific licenses or certifications recommended.")
     key_legal_risks: List[LegalRisk] = Field(..., description="List of key legal risks and their prevention strategies.")
     general_legal_advice: List[str] = Field(..., description="General legal recommendations for the startup.")
+    disclaimer: str = Field(
+        "This AI guidance is for informational purposes only and does not constitute legal advice. "
+        "Always consult with a qualified legal professional for specific legal matters. "
+        "Laws vary by jurisdiction and circumstances.",
+        description="Disclaimer for legal guidance."
+    )
