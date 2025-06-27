@@ -7,7 +7,6 @@ from app.services.investor_matcher import InvestorMatcherService
 from app.services.pitch_feedback_generator import PitchFeedbackGeneratorService
 from app.core.dependencies import get_investor_matcher_service, get_pitch_feedback_generator_service
 
-# Initialize FastAPI APIRouter
 router = APIRouter()
 
 @router.post(
