@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.env # Local environment variables, very important not to commit!
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/ # Jupyter/Colab notebooks
+
+# IDEs
+.idea/             # JetBrains IDEs (PyCharm, IntelliJ)
+.vscode/           # VS Code
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store          # macOS
+.Trashes           # macOS
+Thumbs.db          # Windows
+
+# Docker
+*.log              # Container logs
+*.tmp              # Temporary files
+.dockerignore      # Though this usually lives at root, good to list
+
+# NLTK data (if downloaded to project dir, though typically it's system-wide)
+nltk_data/
+
+# Any other specific temporary files your project might generate
+# For instance, if you write CSV/JSON outputs:
+# output/
+# *.csv
+# *.json
