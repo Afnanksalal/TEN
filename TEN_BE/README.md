@@ -1,6 +1,6 @@
 # TEN Backend
 
-**The Entrepreneurial Navigator** - A comprehensive backend API platform designed to empower early-stage startups with AI-driven insights, risk evaluation, reputation analysis, investor matching, and strategic guidance.
+**The Entrepreneurial Navigator** - A comprehensive platform designed to empower early-stage startups with AI-driven insights, risk evaluation, reputation analysis, investor matching, and strategic guidance.
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -55,13 +55,13 @@ TEN Backend provides 10 comprehensive endpoints for startup ecosystem navigation
 
 - **Python 3.9+**
 - **Docker & Docker Compose**
-- **Redis** (or use the provided Upstash connection)
+- **Redis**
 
 ### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
-cd ten-backend
+git clone https://github.com/Afnanksalal/TEN
+cd TEN/TEN_BE
 ```
 
 ### 2. Redis Setup
