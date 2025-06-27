@@ -116,7 +116,6 @@ class InvestorMatcherService:
         
         top_n_results = clean_results[:10]
 
-        # REVISED PROMPT: Use startup_info directly from parameter
         prompt = f"""
         You are an expert in startup funding. Given the following startup's profile and a list of Google search results,
         identify the 3 MOST RELEVANT and ACTUAL investors (can be a specific firm, an angel investor, or an accelerator) that would be a good match for this startup.
@@ -181,7 +180,7 @@ class InvestorMatcherService:
                     name=investor_profile_data["name"],
                     link=investor_profile_data.get("link"),
                     risk_tolerance=investor_profile_data.get("risk_tolerance", "medium"),
-                    preferred_industries=investor_profile_data.get("preferred_industries", [startup_info.get("industry", "Any")]), # Use startup_info
+                    preferred_industries=investor_profile_data.get("preferred_industries", [startup_info.get("industry", "Any")]),
                     min_investment_usd=investor_profile_data.get("min_investment_usd", 100000),
                     max_investment_usd=investor_profile_data.get("max_investment_usd", 5000000),
                     feedback_focus=investor_profile_data.get("feedback_focus", ["Overall Fit"])
