@@ -12,7 +12,6 @@ class PitchFeedbackGeneratorService:
         self.gemini_model = gemini_model
 
     async def generate_feedback(self, request: PitchFeedbackRequest) -> PitchFeedbackResponse:
-        # Cache key for the PitchFeedbackResponse
         input_hash = hashlib.sha256(request.json().encode('utf-8')).hexdigest()
         cache_key_feedback = f"pitch_feedback:{input_hash}"
 
@@ -21,7 +20,6 @@ class PitchFeedbackGeneratorService:
             print(f"DEBUG(Feedback): Cache hit for pitch feedback: {cache_key_feedback}")
             return PitchFeedbackResponse.parse_raw(cached_feedback_json)
 
-        # Proceed with actual generation if not cached
         risk_info = request.risk_profile.model_dump_json() if request.risk_profile else "Not provided."
         reputation_info = request.reputation_profile.model_dump_json() if request.reputation_profile else "Not provided."
         investor_match_info = request.investor_match_results.model_dump_json() if request.investor_match_results else "Not provided."
@@ -77,7 +75,7 @@ class PitchFeedbackGeneratorService:
             feedback=feedback_list,
             suggestions_for_improvement=suggestions
         )
-        # Cache the final PitchFeedbackResponse for 1 hour
+
         await self.redis_client.setex(cache_key_feedback, 3600, result.json())
         print(f"DEBUG(Feedback): Cached final pitch feedback result: {cache_key_feedback}")
 
