@@ -13,7 +13,6 @@ class ExitStrategyExplorerService:
         self.gemini_model = gemini_model
 
     async def explore_exit_strategies(self, input_data: ExitStrategyExplorerInput) -> ExitStrategyExplorerOutput:
-        # Construct optional details string for the prompt to Gemini
         optional_details = []
         if input_data.current_revenue_usd is not None:
             optional_details.append(f"Current Revenue: ${input_data.current_revenue_usd:,.2f} USD.")
