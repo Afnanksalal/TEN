@@ -114,7 +114,6 @@ class CompetitorRadarService:
 
 
     async def track_competitors(self, input_data: CompetitorRadarInput) -> CompetitorRadarOutput:
-        # Step 1: Improved Google Search Queries for finding competitor names
         search_queries = [
             f"'{input_data.your_industry}' companies for '{input_data.your_product_service_description}'",
             f"competitors of '{input_data.startup_name}' {input_data.your_industry}",
@@ -123,50 +122,40 @@ class CompetitorRadarService:
         
         potential_competitor_candidates = set()
         for query in search_queries:
-            # Using Google general search engine to find company names/websites
             google_results = await asyncio.to_thread(GoogleSearch({"api_key": self.serpapi_key, "q": query, "gl": "us", "hl": "en"}).get_dict)
-            
-            # Extract from Knowledge Graph if available (highly reliable)
             if "knowledge_graph" in google_results:
                 name = google_results["knowledge_graph"].get("title")
                 if name and input_data.startup_name.lower() not in name.lower():
                     potential_competitor_candidates.add((name, google_results["knowledge_graph"].get("website")))
 
-            # Extract from Organic Results (more heuristic)
             for organic_result in google_results.get("organic_results", []):
                 title = organic_result.get("title", "")
                 link = organic_result.get("link", "")
                 snippet = organic_result.get("snippet", "")
 
-                # Heuristic to identify company names from title and domain
                 candidate_name = ""
-                # Prioritize direct company titles or reputable sources
                 if " - " in title:
                     candidate_name = title.split(" - ")[0].strip()
                 elif " | " in title:
                     candidate_name = title.split(" | ")[0].strip()
                 elif link and ('.com' in link or '.io' in link or '.co' in link or '.tech' in link):
-                    # Try to extract company name from domain if it looks like one
                     domain_match = re.search(r'https?://(?:www\.)?([a-zA-Z0-9-]+)\.(?:com|io|co|tech)', link)
                     if domain_match:
-                        candidate_name = domain_match.group(1).replace('-', ' ').title() # Capitalize first letter of words
+                        candidate_name = domain_match.group(1).replace('-', ' ').title()
                         if len(candidate_name) > 3 and "company" not in candidate_name.lower():
                             potential_competitor_candidates.add((candidate_name, link))
-                            continue # Skip other title-based extraction if domain is good
+                            continue
 
                 if candidate_name and len(candidate_name) > 3 and input_data.startup_name.lower() not in candidate_name.lower():
-                    # Further check if the name is likely a company and not a generic list or news
                     if not any(kw in title.lower() for kw in ["best", "top", "list", "vs", "review", "news"]) and \
                        not any(kw in snippet.lower() for kw in ["compare", "guide"]):
                         potential_competitor_candidates.add((candidate_name, link))
             
-            if len(potential_competitor_candidates) >= 10: # Collect more candidates for Gemini to filter
+            if len(potential_competitor_candidates) >= 10:
                 break
 
         print(f"DEBUG(SerpAPI): Found {len(potential_competitor_candidates)} raw competitor candidates.")
 
-        # Step 2: Use Gemini to filter and select the top N actual competitors
-        # This is CRITICAL to filter out news articles, lists, and irrelevant entries.
         competitor_filter_prompt = f"""
         From the following list of potential company names and their associated URLs, identify and select up to 5 actual, distinct competitor companies for a startup in the '{input_data.your_industry}' industry that offers '{input_data.your_product_service_description}'.
         Exclude generic terms, news articles, lists, and irrelevant entries.
@@ -188,30 +177,27 @@ class CompetitorRadarService:
             
             filtered_competitor_names = json.loads(gemini_filter_text)
             if not isinstance(filtered_competitor_names, list):
-                filtered_competitor_names = [] # Ensure it's a list even if AI returns malformed
+                filtered_competitor_names = []
             print(f"DEBUG(Gemini): Filtered down to {len(filtered_competitor_names)} actual competitors.")
 
         except Exception as e:
             print(f"ERROR(Gemini): Competitor filtering failed: {e}. Using raw candidates (less accurate).")
-            # Fallback to a simpler filtering if Gemini fails
             filtered_competitor_names = [name for name, _ in list(potential_competitor_candidates)[:5]]
 
 
         tracked_competitors: List[CompetitorInfo] = []
         general_market_trends: List[str] = []
 
-        # Map filtered names back to their potential websites and then analyze
         competitor_name_to_link = {name: link for name, link in potential_competitor_candidates}
 
-        for comp_name in filtered_competitor_names[:5]: # Analyze up to 5 selected competitors
-            comp_link = competitor_name_to_link.get(comp_name) # Get associated link if found
+        for comp_name in filtered_competitor_names[:5]:
+            comp_link = competitor_name_to_link.get(comp_name)
             
             comp_news = await self._search_google_news(f"{comp_name} {input_data.your_industry} {input_data.your_product_service_description} news funding hiring")
             competitor_info = await self._analyze_competitor_with_gemini(comp_name, input_data.your_industry, comp_news)
             
-            # Set the website extracted from the search if Gemini didn't find one or it's null
             if comp_link and not competitor_info.website:
-                competitor_info.website = HttpUrl(comp_link) # Ensure it's a Pydantic HttpUrl
+                competitor_info.website = HttpUrl(comp_link)
             
             tracked_competitors.append(competitor_info)
 
