@@ -3,7 +3,6 @@ from app.models.schemas import ReputationInput, ReputationOutput
 from app.services.reputation_scanner import ReputationScannerService
 from app.core.dependencies import get_reputation_scanner_service
 
-# Initialize FastAPI APIRouter
 router = APIRouter()
 
 @router.post(
