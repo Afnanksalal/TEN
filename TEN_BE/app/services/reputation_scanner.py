@@ -26,7 +26,6 @@ class ReputationScannerService:
 
         print(f"DEBUG(SerpAPI): Attempting to fetch Twitter data for query: '{query}'")
 
-        # Cache key for raw Twitter search results from SerpAPI
         cache_key_serp = f"twitter_search:{hashlib.sha256(query.encode('utf-8')).hexdigest()}"
         cached_tweets_json = await self.redis_client.get(cache_key_serp)
         if cached_tweets_json:
@@ -71,7 +70,6 @@ class ReputationScannerService:
             tweets = [t for t in tweets if t and t.lower() != "no information is available for this page."]
 
             if tweets:
-                # Cache raw tweets for 1 hour (3600 seconds)
                 await self.redis_client.setex(cache_key_serp, 3600, json.dumps(tweets))
                 print(f"DEBUG(SerpAPI): Cached {len(tweets)} tweets for '{query}'.")
             else:
@@ -83,7 +81,6 @@ class ReputationScannerService:
 
 
     async def scan_reputation(self, input_data: ReputationInput) -> ReputationOutput:
-        # Cache key for the final ReputationOutput
         input_hash = hashlib.sha256(input_data.json().encode('utf-8')).hexdigest()
         cache_key_reputation = f"reputation_analysis:{input_hash}"
 
@@ -92,7 +89,6 @@ class ReputationScannerService:
             print(f"DEBUG(Reputation): Cache hit for reputation analysis: {cache_key_reputation}")
             return ReputationOutput.parse_raw(cached_reputation_json)
 
-        # Proceed with actual analysis if not cached
         all_text_sources: List[str] = [input_data.initial_pitch_text]
 
         if input_data.founder_twitter_handle:
@@ -167,7 +163,6 @@ class ReputationScannerService:
             actionable_insights=sentiment_data.get("actionable_insights", []),
             overall_reputation_review=sentiment_data.get("overall_reputation_review", "Review not generated.")
         )
-        # Cache the final ReputationOutput for 1 hour
         await self.redis_client.setex(cache_key_reputation, 3600, result.json())
         print(f"DEBUG(Reputation): Cached final reputation analysis result: {cache_key_reputation}")
 
