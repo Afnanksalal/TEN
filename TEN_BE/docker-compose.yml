@@ -4,16 +4,12 @@ services:
     build: .
     ports:
       - "8000:8000"
-    environment:
-      REDIS_URL: "redis://redis:6379/0"
-    depends_on:
-      - redis
-    # For live reloading during development (remove for production)
+    # Load environment variables from the .env file at the project root
+    env_file:
+      - .env
+    # For live reloading during development (remove or comment out for production if not needed)
     volumes:
-      - ./app:/app/app
-      - ./requirements.txt:/app/requirements.txt
+      - ./app:/app/app        # Mount your app code for live reloading
+      - ./requirements.txt:/app/requirements.txt # Ensure requirements are available for reload
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-  redis:
-    image: redis:6-alpine
-    ports:
-      - "6379:6379"
+  # --- REMOVED THE 'redis' SERVICE BLOCK ENTIRELY ---
