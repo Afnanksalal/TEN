@@ -9,6 +9,7 @@ from app.services.risk_analyzer import RiskAnalyzerService
 from app.services.reputation_scanner import ReputationScannerService
 from app.services.investor_matcher import InvestorMatcherService
 from app.services.pitch_feedback_generator import PitchFeedbackGeneratorService
+from app.services.legal_advisor import LegalAdvisorService
 
 async def get_redis_dependency() -> redis.Redis:
     return await get_redis_client()
@@ -36,3 +37,9 @@ async def get_pitch_feedback_generator_service(
     gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> PitchFeedbackGeneratorService:
     return PitchFeedbackGeneratorService(redis_client=redis_client, gemini_model=gemini_model)
+
+async def get_legal_advisor_service(
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
+) -> LegalAdvisorService:
+    return LegalAdvisorService(redis_client=redis_client, gemini_model=gemini_model)

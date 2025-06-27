@@ -36,7 +36,7 @@ class ReputationOutput(BaseModel):
 class InvestorProfile(BaseModel):
     id: str = Field(..., description="Unique identifier for the investor (can be a hash of their link).")
     name: str = Field(..., description="Name of the investor or firm (e.g., 'Sequoia Capital', 'Naval Ravikant').")
-    link: Optional[HttpUrl] = Field(None, description="Direct website/profile link for the investor/firm.") # <<< NEW FIELD
+    link: Optional[HttpUrl] = Field(None, description="Direct website/profile link for the investor/firm.")
     risk_tolerance: str = Field(..., description="Investor's typical risk tolerance ('low', 'medium', 'high').")
     preferred_industries: List[str] = Field(..., description="Industries the investor typically focuses on.")
     min_investment_usd: int = Field(..., description="Minimum investment amount in USD.")
@@ -56,6 +56,7 @@ class InvestorMatchInput(BaseModel):
     risk_profile: RiskOutput = Field(..., description="The full risk assessment output for the startup.")
     reputation_profile: ReputationOutput = Field(..., description="The full reputation analysis output for the startup.")
 
+# InvestorMatchOutput MUST be defined before PitchFeedbackRequest
 class InvestorMatchOutput(BaseModel):
     startup_name: str = Field(..., description="Name of the startup for which matches were found.")
     matched_investors: List[MatchDetail] = Field(..., description="A list of potential investor matches, ordered by match score.")
@@ -71,3 +72,37 @@ class PitchFeedbackResponse(BaseModel):
     startup_name: str = Field(..., description="Name of the startup that received feedback.")
     feedback: List[str] = Field(..., description="General feedback points on the pitch.")
     suggestions_for_improvement: List[str] = Field(..., description="Actionable suggestions to improve the pitch.")
+
+# --- NEW: Legal Assistance Models ---
+
+class LegalAssistanceInput(BaseModel):
+    startup_name: str = Field(..., description="Name of the startup.")
+    industry: str = Field(..., description="Primary industry of the startup (e.g., 'Food Tech', 'SaaS', 'FinTech').")
+    business_model_summary: str = Field(..., min_length=50, description="A brief summary of what your business does and how it operates (e.g., 'develops mobile app for food delivery', 'sells organic skincare products online').")
+    funding_stage: str = Field(..., description="Current funding stage (e.g., 'ideation', 'pre-seed', 'seed', 'Series A', 'bootstrapped').")
+    num_founders: int = Field(..., ge=1, description="Number of co-founders.")
+    num_employees: int = Field(..., ge=0, description="Current number of employees (excluding founders).")
+    handles_personal_data: bool = Field(..., description="Does your business collect, store, or process personal data (e.g., user profiles, health info)?")
+    sells_physical_products: bool = Field(..., description="Does your business sell physical products (vs. purely digital services)?")
+
+class LegalDocument(BaseModel):
+    name: str = Field(..., description="Name of the legal document (e.g., 'Founder's Agreement', 'NDA').")
+    description: str = Field(..., description="Brief description of the document's purpose.")
+    relevance_reason: str = Field(..., description="Why this document is relevant for the startup.")
+
+class LicenseCertification(BaseModel):
+    name: str = Field(..., description="Name of the license/certification (e.g., 'Food Handler's Permit').")
+    description: str = Field(..., description="Brief description of what it entails.")
+    relevance_reason: str = Field(..., description="Why this is relevant based on industry/business model.")
+
+class LegalRisk(BaseModel):
+    name: str = Field(..., description="Name of the legal risk (e.g., 'IP Infringement', 'Data Breach').")
+    description: str = Field(..., description="Description of the risk.")
+    prevention_strategy: str = Field(..., description="Actionable steps to prevent or mitigate this risk.")
+
+class LegalAssistanceOutput(BaseModel):
+    startup_name: str = Field(..., description="Name of the startup.")
+    essential_documents: List[LegalDocument] = Field(..., description="List of essential legal documents recommended.")
+    industry_licenses_certs: List[LicenseCertification] = Field(..., description="List of industry-specific licenses or certifications recommended.")
+    key_legal_risks: List[LegalRisk] = Field(..., description="List of key legal risks and their prevention strategies.")
+    general_legal_advice: List[str] = Field(..., description="General legal recommendations for the startup.")

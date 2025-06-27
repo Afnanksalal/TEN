@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from app.api.v1.routers import risk, reputation, matching
+from app.api.v1.routers import risk, reputation, matching, legal
 from app.core.config import settings
 from app.core.redis import connect_redis, disconnect_redis
 from app.core.gemini_client import init_gemini_model
@@ -31,6 +31,7 @@ async def shutdown_event():
 app.include_router(risk.router, prefix="/api/v1", tags=["Risk Assessment"])
 app.include_router(reputation.router, prefix="/api/v1", tags=["Reputation Analysis"])
 app.include_router(matching.router, prefix="/api/v1", tags=["Investor Matching & Pitch Feedback"])
+app.include_router(legal.router, prefix="/api/v1", tags=["Legal Assistance"]) # ADD THIS LINE
 
 @app.get("/", summary="Health Check", tags=["System"])
 async def read_root():
