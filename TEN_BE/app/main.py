@@ -19,7 +19,7 @@ import uvicorn
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
-    description="An AI-powered platform to assist first-time entrepreneurs with risk assessment, reputation analysis, and investor matching.",
+    description="An AI-powered platform to assist early-stage startup founders who want clarity while building, Brings together key insights about your startup's risk, reputation, traction, team, and investor readiness — all in one place, and actually useful.",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -45,7 +45,6 @@ app.include_router(competitor_radar.router, prefix="/api/v1", tags=["Competitor 
 app.include_router(traction_estimator.router, prefix="/api/v1", tags=["Traction Estimator"])
 app.include_router(buzz_builder.router, prefix="/api/v1", tags=["Buzz Builder"])
 app.include_router(legal.router, prefix="/api/v1", tags=["Legal Assistance"])
-# NEW ROUTERS - using the full module names
 app.include_router(exit_strategy_explorer.router, prefix="/api/v1", tags=["Exit Strategy Explorer"])
 app.include_router(talent_navigator.router, prefix="/api/v1", tags=["Talent Navigator"])
 
