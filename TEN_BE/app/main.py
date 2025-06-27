@@ -1,7 +1,16 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
-
-from app.api.v1.routers import risk, reputation, matching, competitor_radar, traction_estimator, buzz_builder, legal
+from app.api.v1.routers import (
+    risk,
+    reputation,
+    matching,
+    competitor_radar,
+    traction_estimator,
+    buzz_builder,
+    legal,
+    exit_strategy_explorer,
+    talent_navigator,
+)
 from app.core.config import settings
 from app.core.redis import connect_redis, disconnect_redis
 from app.core.gemini_client import init_gemini_model
@@ -36,6 +45,10 @@ app.include_router(competitor_radar.router, prefix="/api/v1", tags=["Competitor 
 app.include_router(traction_estimator.router, prefix="/api/v1", tags=["Traction Estimator"])
 app.include_router(buzz_builder.router, prefix="/api/v1", tags=["Buzz Builder"])
 app.include_router(legal.router, prefix="/api/v1", tags=["Legal Assistance"])
+# NEW ROUTERS - using the full module names
+app.include_router(exit_strategy_explorer.router, prefix="/api/v1", tags=["Exit Strategy Explorer"])
+app.include_router(talent_navigator.router, prefix="/api/v1", tags=["Talent Navigator"])
+
 
 @app.get("/", summary="Health Check", tags=["System"])
 async def read_root():

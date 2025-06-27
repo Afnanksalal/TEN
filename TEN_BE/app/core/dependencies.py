@@ -13,7 +13,10 @@ from app.services.pitch_feedback_generator import PitchFeedbackGeneratorService
 from app.services.competitor_radar import CompetitorRadarService
 from app.services.traction_estimator import TractionEstimatorService
 from app.services.buzz_builder import BuzzBuilderService
-from app.services.legal_advisor import LegalAdvisorService # Correct import, using LegalAdvisorService
+from app.services.legal_advisor import LegalAdvisorService
+# NEW IMPORTS
+from app.services.exit_strategy_explorer import ExitStrategyExplorerService
+from app.services.talent_navigator import TalentNavigatorService
 
 
 async def get_redis_dependency() -> redis.Redis:
@@ -66,3 +69,17 @@ async def get_legal_advisor_service(
     gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> LegalAdvisorService: 
     return LegalAdvisorService(redis_client=redis_client, gemini_model=gemini_model)
+
+# NEW DEPENDENCY FOR EXIT STRATEGY EXPLORER SERVICE
+async def get_exit_strategy_explorer_service(
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
+) -> ExitStrategyExplorerService:
+    return ExitStrategyExplorerService(redis_client=redis_client, gemini_model=gemini_model)
+
+# NEW DEPENDENCY FOR TALENT NAVIGATOR SERVICE
+async def get_talent_navigator_service(
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
+) -> TalentNavigatorService:
+    return TalentNavigatorService(redis_client=redis_client, gemini_model=gemini_model)

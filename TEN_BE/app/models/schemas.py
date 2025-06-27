@@ -203,3 +203,61 @@ class LegalAssistanceOutput(BaseModel):
         "Laws vary by jurisdiction and circumstances.",
         description="Disclaimer for legal guidance."
     )
+
+# --- 8. Exit Strategy Explorer Models ---
+class AcquirerType(BaseModel):
+    type_name: str = Field(..., description="Type of acquirer (e.g., 'Strategic Buyer', 'Private Equity Firm').")
+
+class ActionItem(BaseModel):
+    item: str = Field(..., description="An actionable step the startup can take.")
+
+class ExitStrategy(BaseModel):
+    strategy_name: str = Field(..., description="Name of the exit strategy (e.g., 'Acquisition by Strategic Buyer', 'IPO').")
+    description: str = Field(..., description="Brief description of the strategy.")
+    common_acquirer_types: List[AcquirerType] = Field(..., description="Common types of acquirers or strategic partners.")
+    attractiveness_metrics: List[str] = Field(..., description="Key metrics/characteristics that make a company attractive for this strategy.")
+    action_items: List[ActionItem] = Field(..., description="Actionable steps to improve readiness for this strategy.")
+
+class ExitStrategyExplorerInput(BaseModel):
+    startup_name: str = Field(..., description="Name of the startup.")
+    industry: str = Field(..., description="Industry of the startup.")
+    business_model_summary: str = Field(..., min_length=50, description="A summary of the startup's business model.")
+    funding_stage: str = Field(..., description="Current funding stage (e.g., 'seed', 'Series A').")
+    
+    # NEW OPTIONAL PARAMETERS
+    current_revenue_usd: Optional[float] = Field(None, ge=0.0, description="Current annual or monthly recurring revenue in USD.")
+    monthly_active_users: Optional[int] = Field(None, ge=0, description="Current Monthly Active Users (MAU) for digital products.")
+    competitive_landscape_summary: Optional[str] = Field(None, min_length=20, description="A brief summary of the competitive landscape and the startup's position.")
+    ip_status: Optional[str] = Field(None, description="Status of intellectual property (e.g., 'Patented technology', 'Trade secrets', 'Open-source contribution').")
+    unique_value_proposition: Optional[str] = Field(None, min_length=20, description="What makes the startup uniquely valuable or difficult to replicate.")
+    founder_exit_goals: Optional[str] = Field(None, description="The founders' long-term goals for an exit (e.g., 'maximize valuation', 'ensure product continuity', 'quick exit').")
+
+
+class ExitStrategyExplorerOutput(BaseModel):
+    startup_name: str = Field(..., description="Name of the startup analyzed.")
+    relevant_exit_strategies: List[ExitStrategy] = Field(..., description="List of relevant exit strategies with details.")
+    strategic_planning_tips: List[str] = Field(..., description="General AI tips for long-term strategic planning.")
+
+# --- 9. Talent Navigator Models ---
+class InterviewQuestion(BaseModel):
+    question: str = Field(..., description="A specific, insightful interview question.")
+
+class RecommendedRole(BaseModel):
+    role_name: str = Field(..., description="Name of the recommended role (e.g., 'Head of Product', 'Senior Backend Engineer').")
+    ideal_candidate_profile: str = Field(..., description="Description of the ideal candidate profile (key skills, experience, traits).")
+    interview_questions: List[InterviewQuestion] = Field(..., description="Suggested interview questions for this role.")
+
+class TalentTip(BaseModel):
+    tip: str = Field(..., description="An AI coaching tip for team building.")
+
+class TalentNavigatorInput(BaseModel):
+    startup_name: str = Field(..., description="Name of the startup.")
+    your_industry: str = Field(..., description="Your primary industry for context.")
+    funding_stage: str = Field(..., description="Current funding stage (e.g., 'pre-seed', 'seed').")
+    current_team_size: int = Field(..., ge=0, description="Current number of team members.")
+    key_challenge: str = Field(..., min_length=20, description="The key challenge the startup is facing that talent could help address.")
+
+class TalentNavigatorOutput(BaseModel):
+    startup_name: str = Field(..., description="Name of the startup analyzed.")
+    recommended_roles: List[RecommendedRole] = Field(..., description="List of recommended roles with candidate profiles and interview questions.")
+    team_building_tips: List[TalentTip] = Field(..., description="General AI coaching tips for building a strong early-stage team.")
