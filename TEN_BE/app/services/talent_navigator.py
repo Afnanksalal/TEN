@@ -38,7 +38,7 @@ class TalentNavigatorService:
         """
 
         recommended_roles: List[RecommendedRole] = []
-        team_building_tips: List[TalentTip] = [] # Using TalentTip for consistency if it's just a list of strings
+        team_building_tips: List[TalentTip] = []
 
         try:
             response = await asyncio.to_thread(self.gemini_model.generate_content, prompt)
@@ -50,15 +50,14 @@ class TalentNavigatorService:
             
             roles_raw = gemini_data.get("recommended_roles", [])
             for r in roles_raw:
-                # Ensure interview_questions is a list of strings
                 interview_q_list = r.get("interview_questions", [])
                 if not isinstance(interview_q_list, list):
-                    interview_q_list = [str(interview_q_list)] # Convert to list if not already
+                    interview_q_list = [str(interview_q_list)]
 
                 recommended_roles.append(RecommendedRole(
                     role_name=r.get("role_name", "Unknown Role"),
                     ideal_candidate_profile=r.get("ideal_candidate_profile", "N/A"),
-                    interview_questions=[InterviewQuestion(question=q) for q in interview_q_list] # Wrap each question
+                    interview_questions=[InterviewQuestion(question=q) for q in interview_q_list]
                 ))
             
             team_building_tips = [TalentTip(tip=t) for t in gemini_data.get("team_building_tips", [])]
