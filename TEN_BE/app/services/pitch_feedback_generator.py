@@ -1,84 +1,84 @@
+import json
 from typing import List, Optional
 import redis.asyncio as redis
 from app.models.schemas import PitchFeedbackRequest, PitchFeedbackResponse, RiskOutput, ReputationOutput, InvestorMatchOutput
+import google.generativeai as genai
+import asyncio
+import hashlib
 
 class PitchFeedbackGeneratorService:
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis, gemini_model: genai.GenerativeModel):
         self.redis_client = redis_client
+        self.gemini_model = gemini_model
 
     async def generate_feedback(self, request: PitchFeedbackRequest) -> PitchFeedbackResponse:
+        # Cache key for the PitchFeedbackResponse
+        input_hash = hashlib.sha256(request.json().encode('utf-8')).hexdigest()
+        cache_key_feedback = f"pitch_feedback:{input_hash}"
+
+        cached_feedback_json = await self.redis_client.get(cache_key_feedback)
+        if cached_feedback_json:
+            print(f"DEBUG(Feedback): Cache hit for pitch feedback: {cache_key_feedback}")
+            return PitchFeedbackResponse.parse_raw(cached_feedback_json)
+
+        # Proceed with actual generation if not cached
+        risk_info = request.risk_profile.model_dump_json() if request.risk_profile else "Not provided."
+        reputation_info = request.reputation_profile.model_dump_json() if request.reputation_profile else "Not provided."
+        investor_match_info = request.investor_match_results.model_dump_json() if request.investor_match_results else "Not provided."
+
+        prompt = f"""
+        You are an AI startup advisor. Analyze the following pitch for "{request.startup_name}" and provide constructive feedback and actionable suggestions for improvement.
+        Focus on clarity, completeness, investor appeal, and addressing potential concerns.
+        Consider the following additional context if provided:
+
+        --- Pitch Text ---
+        {request.pitch_text}
+        --- End Pitch Text ---
+
+        --- Risk Profile (Optional Context) ---
+        {risk_info}
+        --- End Risk Profile ---
+
+        --- Reputation Profile (Optional Context) ---
+        {reputation_info}
+        --- End Reputation Profile ---
+
+        --- Investor Match Results (Optional Context) ---
+        {investor_match_info}
+        --- End Investor Match Results ---
+
+        Provide the output in a JSON format with two keys: "feedback" (list of general observations/strengths) and "suggestions_for_improvement" (list of actionable steps).
+        Ensure the suggestions are specific and directly related to the pitch and provided contexts.
+        Do not include any preamble, just the JSON.
         """
-        Generates constructive feedback and suggestions for a startup's pitch.
-        Leverages risk and reputation analysis results if available.
-        """
+
         feedback_list: List[str] = []
         suggestions: List[str] = []
 
-        pitch_lower = request.pitch_text.lower()
+        try:
+            response = await asyncio.to_thread(self.gemini_model.generate_content, prompt)
+            gemini_output_text = response.text.strip()
 
-        # Basic Pitch Structure Checks
-        if len(request.pitch_text) < 150:
-            feedback_list.append("Pitch is quite short.")
-            suggestions.append("Consider expanding on key sections like problem, solution, market, and team. Aim for a concise but comprehensive overview.")
-        elif len(request.pitch_text) > 1500:
-            feedback_list.append("Pitch might be too long.")
-            suggestions.append("Focus on conciseness. Can you convey your core message more efficiently? Investors have limited time.")
+            if gemini_output_text.startswith("```json") and gemini_output_text.endswith("```"):
+                gemini_output_text = gemini_output_text[len("```json"): -len("```")].strip()
+            
+            gemini_data = json.loads(gemini_output_text)
 
-        # Check for core pitch elements (simple keyword detection)
-        keywords_problem = ["problem", "challenge", "issue", "pain point"]
-        keywords_solution = ["solution", "product", "service", "how it works", "platform"]
-        keywords_market = ["market", "target audience", "customers", "TAM", "SAM", "SOM"]
-        keywords_team = ["team", "founders", "experience", "background"]
-        keywords_traction = ["traction", "users", "revenue", "growth", "metrics"]
-        keywords_ask = ["ask", "raise", "funding", "investment", "seeking"]
+            feedback_list = gemini_data.get("feedback", ["Gemini did not provide specific feedback. Check prompt or response."])
+            suggestions = gemini_data.get("suggestions_for_improvement", ["Gemini did not provide specific suggestions. Check prompt or response."])
 
-        def check_and_suggest(keywords: List[str], feedback_msg: str, suggestion_msg: str):
-            if not any(k in pitch_lower for k in keywords):
-                feedback_list.append(feedback_msg)
-                suggestions.append(suggestion_msg)
+        except Exception as e:
+            print(f"Gemini API call failed for pitch feedback: {e}")
+            feedback_list = ["Could not generate detailed pitch feedback due to AI service error."]
+            suggestions = [f"Please check your Google API key or the Gemini service status. Error: {e}"]
 
-        check_and_suggest(keywords_problem, "The core problem you're solving is not explicitly clear.", "Start by clearly and concisely defining the significant problem your startup addresses.")
-        check_and_suggest(keywords_solution, "Your proposed solution/product is not clearly articulated.", "Detail your solution, how it works, and its unique value proposition.")
-        check_and_suggest(keywords_market, "Missing details on your market size or target customer.", "Quantify your market opportunity and describe your ideal customer segment.")
-        check_and_suggest(keywords_team, "The pitch lacks information about your team's expertise or background.", "Highlight your team's relevant experience and why you are uniquely qualified to build this business.")
-        check_and_suggest(keywords_traction, "Little to no mention of early traction or key metrics.", "If you have any users, revenue, or significant milestones, include them to demonstrate progress.")
-        check_and_suggest(keywords_ask, "Your 'ask' (funding amount and use of funds) is not clear.", "State clearly how much capital you are raising and how you plan to use it to achieve milestones.")
-
-        # Integrate Risk Profile Feedback
-        if request.risk_profile:
-            for rf in request.risk_profile.risk_factors:
-                if rf.level == "high":
-                    feedback_list.append(f"High risk identified in '{rf.name}' (Score: {request.risk_profile.overall_risk_score:.2f}% overall risk).")
-                    suggestions.append(f"Explicitly address how you plan to mitigate the '{rf.name}' risk. For example: '{rf.mitigation_suggestion}'")
-                    if rf.name.lower() in pitch_lower:
-                        feedback_list.append(f"Good job mentioning '{rf.name}' in your pitch, but ensure your mitigation strategy is clear.")
-
-        # Integrate Reputation Profile Feedback
-        if request.reputation_profile:
-            if request.reputation_profile.overall_sentiment_score < -0.3:
-                feedback_list.append(f"Early sentiment is moderately negative (Score: {request.reputation_profile.overall_sentiment_score:.2f}).")
-                suggestions.append("Consider acknowledging potential negative perceptions (if any) and articulate how you plan to build positive public perception.")
-            elif request.reputation_profile.overall_sentiment_score > 0.3:
-                feedback_list.append(f"Early sentiment is positive (Score: {request.reputation_profile.overall_sentiment_score:.2f}).")
-                suggestions.append("Emphasize aspects that contribute to positive sentiment (e.g., 'innovative' or 'growth' if identified as themes).")
-
-        # Integrate Investor Match Results Feedback
-        if request.investor_match_results and request.investor_match_results.matched_investors:
-            top_investor_match = request.investor_match_results.matched_investors[0]
-            feedback_list.append(f"Your top investor match is '{top_investor_match.investor.name}' with a score of {top_investor_match.match_score:.2f}%.")
-            if top_investor_match.gaps:
-                feedback_list.append("Identify specific gaps that might deter investors:")
-                suggestions.append(f"For investors like '{top_investor_match.investor.name}', consider refining your pitch to address these gaps: {'; '.join(top_investor_match.gaps)}.")
-            if top_investor_match.investor.feedback_focus:
-                suggestions.append(f"For investors like '{top_investor_match.investor.name}', they often focus on: {', '.join(top_investor_match.investor.feedback_focus)}. Tailor your pitch to emphasize these areas.")
-
-
-        if not feedback_list: # If no specific issues found
-            feedback_list.append("Your pitch seems to cover essential elements well!")
-            suggestions.append("Focus on refining your delivery, storytelling, and compelling call to action. Practice makes perfect!")
-
-        return PitchFeedbackResponse(
+        result = PitchFeedbackResponse(
             startup_name=request.startup_name,
             feedback=feedback_list,
             suggestions_for_improvement=suggestions
         )
+        # Cache the final PitchFeedbackResponse for 1 hour
+        await self.redis_client.setex(cache_key_feedback, 3600, result.json())
+        print(f"DEBUG(Feedback): Cached final pitch feedback result: {cache_key_feedback}")
+
+        return result

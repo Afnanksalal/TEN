@@ -1,56 +1,174 @@
-from typing import List
 import redis.asyncio as redis
 from app.models.schemas import ReputationInput, ReputationOutput
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import re
+from typing import List, Dict, Any, Optional
+from serpapi import GoogleSearch
+from app.core.config import settings
+import asyncio
+import json
+import hashlib
+import google.generativeai as genai
 
 class ReputationScannerService:
-    def __init__(self, redis_client: redis.Redis):
+    def __init__(self, redis_client: redis.Redis, gemini_model: genai.GenerativeModel):
         self.redis_client = redis_client
-        self.analyzer = SentimentIntensityAnalyzer()
+        self.gemini_model = gemini_model
+        self.serpapi_key = settings.SERPAPI_API_KEY
+        print(f"DEBUG(SerpAPI): Key loaded status: {bool(self.serpapi_key)}")
+        if self.serpapi_key:
+            print(f"DEBUG(SerpAPI): Key prefix: {self.serpapi_key[:5]}...")
+
+
+    async def _fetch_twitter_data(self, query: str) -> List[str]:
+        if not self.serpapi_key:
+            print("SerpAPI key not configured. Skipping Twitter data fetch.")
+            return []
+
+        print(f"DEBUG(SerpAPI): Attempting to fetch Twitter data for query: '{query}'")
+
+        # Cache key for raw Twitter search results from SerpAPI
+        cache_key_serp = f"twitter_search:{hashlib.sha256(query.encode('utf-8')).hexdigest()}"
+        cached_tweets_json = await self.redis_client.get(cache_key_serp)
+        if cached_tweets_json:
+            print(f"DEBUG(SerpAPI): Cache hit for Twitter search: '{query}'")
+            return json.loads(cached_tweets_json)
+
+        params = {
+            "api_key": self.serpapi_key,
+            "engine": "google",
+            "q": f"{query} site:twitter.com OR site:x.com",
+            "num": 20
+        }
+        tweets = []
+        try:
+            print(f"DEBUG(SerpAPI): Calling SerpAPI for query '{query}' with params: {params}")
+            search = GoogleSearch(params)
+            
+            results = await asyncio.to_thread(search.get_dict)
+            
+            print(f"DEBUG(SerpAPI): Raw SerpAPI response for '{query}': {json.dumps(results, indent=2)[:1000]}{'...' if len(json.dumps(results)) > 1000 else ''}")
+
+            if "error" in results:
+                print(f"ERROR(SerpAPI): API returned an error for query '{query}': {results['error']}")
+                return []
+
+            if "latest_posts" in results:
+                print(f"DEBUG(SerpAPI): Found 'latest_posts' key in response for '{query}'.")
+                for post in results["latest_posts"]:
+                    tweet_text = post.get("title", "").strip()
+                    if tweet_text:
+                        tweets.append(tweet_text)
+            
+            if "organic_results" in results:
+                print(f"DEBUG(SerpAPI): Found 'organic_results' key in response for '{query}'.")
+                for result_data in results["organic_results"]:
+                    link = result_data.get("link", "")
+                    snippet = result_data.get("snippet", "").strip()
+                    if (link.startswith("https://twitter.com/") or link.startswith("https://x.com/")) and snippet:
+                        if snippet not in tweets:
+                            tweets.append(snippet)
+            
+            tweets = [t for t in tweets if t and t.lower() != "no information is available for this page."]
+
+            if tweets:
+                # Cache raw tweets for 1 hour (3600 seconds)
+                await self.redis_client.setex(cache_key_serp, 3600, json.dumps(tweets))
+                print(f"DEBUG(SerpAPI): Cached {len(tweets)} tweets for '{query}'.")
+            else:
+                print(f"DEBUG(SerpAPI): No relevant tweets extracted for '{query}'. Not caching.")
+
+        except Exception as e:
+            print(f"ERROR(SerpAPI): Exception during SerpAPI call for query '{query}': {type(e).__name__}: {e}")
+        return tweets
+
 
     async def scan_reputation(self, input_data: ReputationInput) -> ReputationOutput:
-        """
-        Analyzes the sentiment of provided text and generates insights.
-        """
-        all_text = input_data.initial_pitch_text
+        # Cache key for the final ReputationOutput
+        input_hash = hashlib.sha256(input_data.json().encode('utf-8')).hexdigest()
+        cache_key_reputation = f"reputation_analysis:{input_hash}"
+
+        cached_reputation_json = await self.redis_client.get(cache_key_reputation)
+        if cached_reputation_json:
+            print(f"DEBUG(Reputation): Cache hit for reputation analysis: {cache_key_reputation}")
+            return ReputationOutput.parse_raw(cached_reputation_json)
+
+        # Proceed with actual analysis if not cached
+        all_text_sources: List[str] = [input_data.initial_pitch_text]
+
         if input_data.founder_twitter_handle:
-            all_text += f" Founder is @{input_data.founder_twitter_handle}."
-        if input_data.founder_linkedin_url:
-            all_text += f" Founder LinkedIn: {input_data.founder_linkedin_url}."
+            all_text_sources.append(f"Founder's Twitter handle: @{input_data.founder_twitter_handle}.")
 
-        vs = self.analyzer.polarity_scores(all_text)
-        overall_sentiment_score = vs['compound']
+        twitter_queries_to_fetch = []
+        if input_data.founder_twitter_handle:
+            twitter_queries_to_fetch.append(f"from:{input_data.founder_twitter_handle}")
+            twitter_queries_to_fetch.append(f"@{input_data.founder_twitter_handle}")
+        
+        twitter_queries_to_fetch.append(f"{input_data.startup_name}")
 
-        positive_themes: List[str] = []
-        negative_themes: List[str] = []
-        neutral_themes: List[str] = []
-        actionable_insights: List[str] = []
+        for query in twitter_queries_to_fetch:
+            fetched_tweets = await self._fetch_twitter_data(query)
+            all_text_sources.extend(fetched_tweets)
+        
+        combined_text = " ".join(all_text_sources).strip()
 
-        if overall_sentiment_score > 0.2:
-            positive_keywords = ["innovative", "scalable", "breakthrough", "efficient", "growth", "disruptive", "strong", "promising", "unique"]
-            for keyword in positive_keywords:
-                if re.search(r'\b' + re.escape(keyword) + r'\b', all_text, re.IGNORECASE):
-                    positive_themes.append(keyword)
-            if not positive_themes: positive_themes.append("general positive tone")
-            actionable_insights.append("Capitalize on strong positive sentiment. Highlight these strengths in your messaging.")
-        elif overall_sentiment_score < -0.2:
-            negative_keywords = ["challenge", "risk", "expensive", "complex", "unproven", "slow", "weak", "uncertain", "doubt"]
-            for keyword in negative_keywords:
-                if re.search(r'\b' + re.escape(keyword) + r'\b', all_text, re.IGNORECASE):
-                    negative_themes.append(keyword)
-            if not negative_themes: negative_themes.append("general negative tone")
-            actionable_insights.append("Address negative sentiment directly. Develop a communication strategy to mitigate concerns and build trust.")
-        else:
-            neutral_themes.append("neutral sentiment or mixed signals")
-            actionable_insights.append("Focus on clearly articulating your value proposition to move sentiment from neutral to positive.")
-            actionable_insights.append("Seek early feedback to identify areas of confusion or potential concerns.")
+        if not combined_text:
+            combined_text = "No substantial public data found for analysis. Analyzing only provided pitch text."
 
-        return ReputationOutput(
+        prompt = f"""
+        Analyze the overall sentiment and public reputation of the following text related to a startup and its public perception.
+        Provide an overall sentiment score (from -1.0 for extremely negative to +1.0 for extremely positive, 0.0 for neutral).
+        Identify key positive, negative, and neutral themes discussed.
+        Suggest actionable insights for reputation management based on the sentiment.
+        Finally, provide a concise (1-2 sentences) overall qualitative review of the startup's/person's reputation.
+
+        Text to Analyze:
+        ---
+        {combined_text}
+        ---
+
+        Output in JSON format with the following structure:
+        {{
+            "overall_sentiment_score": <float -1.0 to 1.0>,
+            "positive_themes": ["theme1", "theme2"],
+            "negative_themes": ["theme1", "theme2"],
+            "neutral_themes": ["theme1", "theme2"],
+            "actionable_insights": ["insight1", "insight2"],
+            "overall_reputation_review": "Concise review here."
+        }}
+        """
+        
+        sentiment_data = {}
+        try:
+            gemini_response = await asyncio.to_thread(self.gemini_model.generate_content, prompt)
+            gemini_output_text = gemini_response.text.strip()
+            if gemini_output_text.startswith("```json") and gemini_output_text.endswith("```"):
+                gemini_output_text = gemini_output_text[len("```json"): -len("```")].strip()
+            
+            sentiment_data = json.loads(gemini_output_text)
+            print(f"DEBUG(Gemini Sentiment): Raw Gemini Response: {sentiment_data}")
+
+        except Exception as e:
+            print(f"ERROR(Gemini Sentiment): Gemini sentiment analysis failed: {e}. Falling back to default/simplified output.")
+            sentiment_data = {
+                "overall_sentiment_score": 0.0,
+                "positive_themes": ["AI service unavailable"],
+                "negative_themes": [],
+                "neutral_themes": [],
+                "actionable_insights": [f"Gemini sentiment analysis failed: {e}. Check API key or service."],
+                "overall_reputation_review": "Reputation review unavailable due to AI service error."
+            }
+
+        result = ReputationOutput(
             startup_name=input_data.startup_name,
-            overall_sentiment_score=round(overall_sentiment_score, 2),
-            positive_themes=positive_themes,
-            negative_themes=negative_themes,
-            neutral_themes=neutral_themes,
-            actionable_insights=actionable_insights
+            overall_sentiment_score=float(sentiment_data.get("overall_sentiment_score", 0.0)),
+            positive_themes=sentiment_data.get("positive_themes", []),
+            negative_themes=sentiment_data.get("negative_themes", []),
+            neutral_themes=sentiment_data.get("neutral_themes", []),
+            actionable_insights=sentiment_data.get("actionable_insights", []),
+            overall_reputation_review=sentiment_data.get("overall_reputation_review", "Review not generated.")
         )
+        # Cache the final ReputationOutput for 1 hour
+        await self.redis_client.setex(cache_key_reputation, 3600, result.json())
+        print(f"DEBUG(Reputation): Cached final reputation analysis result: {cache_key_reputation}")
+
+        return result

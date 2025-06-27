@@ -1,52 +1,38 @@
 from fastapi import Depends
 from typing import Awaitable
-from typing import Optional
-
 import redis.asyncio as redis
+import google.generativeai as genai
+
 from app.core.redis import get_redis_client
+from app.core.gemini_client import get_gemini_model
 from app.services.risk_analyzer import RiskAnalyzerService
 from app.services.reputation_scanner import ReputationScannerService
 from app.services.investor_matcher import InvestorMatcherService
 from app.services.pitch_feedback_generator import PitchFeedbackGeneratorService
 
-# --- Redis Dependency ---
-async def get_redis_dependency():
-    """
-    Dependency that provides the Redis client instance.
-    """
+async def get_redis_dependency() -> redis.Redis:
     return await get_redis_client()
 
-# --- Service Dependencies ---
-# Each service depends on the Redis client, so we pass it in using Depends()
-
 async def get_risk_analyzer_service(
-    redis_client: Awaitable[redis.Redis] = Depends(get_redis_dependency)
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> RiskAnalyzerService:
-    """
-    Dependency that provides an instance of RiskAnalyzerService.
-    """
-    return RiskAnalyzerService(redis_client=await redis_client)
+    return RiskAnalyzerService(redis_client=redis_client, gemini_model=gemini_model)
 
 async def get_reputation_scanner_service(
-    redis_client: Awaitable[redis.Redis] = Depends(get_redis_dependency)
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> ReputationScannerService:
-    """
-    Dependency that provides an instance of ReputationScannerService.
-    """
-    return ReputationScannerService(redis_client=await redis_client)
+    return ReputationScannerService(redis_client=redis_client, gemini_model=gemini_model)
 
 async def get_investor_matcher_service(
-    redis_client: Awaitable[redis.Redis] = Depends(get_redis_dependency)
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> InvestorMatcherService:
-    """
-    Dependency that provides an instance of InvestorMatcherService.
-    """
-    return InvestorMatcherService(redis_client=await redis_client)
+    return InvestorMatcherService(redis_client=redis_client, gemini_model=gemini_model)
 
 async def get_pitch_feedback_generator_service(
-    redis_client: Awaitable[redis.Redis] = Depends(get_redis_dependency)
+    redis_client: redis.Redis = Depends(get_redis_dependency),
+    gemini_model: genai.GenerativeModel = Depends(get_gemini_model)
 ) -> PitchFeedbackGeneratorService:
-    """
-    Dependency that provides an instance of PitchFeedbackGeneratorService.
-    """
-    return PitchFeedbackGeneratorService(redis_client=await redis_client)
+    return PitchFeedbackGeneratorService(redis_client=redis_client, gemini_model=gemini_model)
