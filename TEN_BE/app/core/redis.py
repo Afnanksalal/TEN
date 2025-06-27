@@ -16,13 +16,9 @@ async def connect_redis():
     async with _lock:
         if _redis_client is None:
             try:
-                # REMOVE ssl=True AND ssl_cert_reqs='required'
-                # Rely on the 'rediss://' scheme in REDIS_URL to imply SSL
                 _redis_client = redis.from_url(
                     settings.REDIS_URL,
                     decode_responses=True,
-                    # ssl=True, # <--- REMOVE THIS LINE
-                    # ssl_cert_reqs='required' # <--- REMOVE THIS LINE
                 )
                 await _redis_client.ping()
                 print("Successfully connected to Upstash Redis!")
