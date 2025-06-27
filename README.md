@@ -11,7 +11,7 @@
 
 ## 🌟 Live Platform
 
-**Try TEN:** [https://ten-be.koyeb.app](https://ten-be.koyeb.app)
+**Try TEN:** [https://ten-eden.vercel.app/](https://ten-eden.vercel.app/)
 
 ---
 
