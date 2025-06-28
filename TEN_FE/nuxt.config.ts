@@ -1,52 +1,43 @@
+// nuxt.config.ts
 import { defineNuxtConfig } from 'nuxt/config';
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
-  // Runtime config for environment variables
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'https://ten-be.koyeb.app', // Added a fallback for development
-      backendApiKey: process.env.NUXT_PUBLIC_BACKEND_API_KEY, // Keep backend API key if used by your composable
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'https://ten-be.koyeb.app',
+      backendApiKey: process.env.NUXT_PUBLIC_BACKEND_API_KEY,
     }
   },
 
-  // Modules: Tailwind CSS is already here.
   modules: [
-    '@nuxtjs/tailwindcss'
+    '@nuxtjs/tailwindcss',
+    '@vite-pwa/nuxt',
   ],
 
-  // Global CSS files. Font Awesome's styles are added here.
   css: [
-    '@fortawesome/fontawesome-svg-core/styles.css', // Font Awesome's core CSS
-    '~/assets/css/main.css', 
-    'animate.css/animate.min.css',
-// Your custom/Tailwind base CSS
+    '@fortawesome/fontawesome-svg-core/styles.css',
+    '~/assets/css/main.css',
   ],
 
-  // Plugins to be loaded before the app mounts. Font Awesome plugin is added here.
   plugins: [
-    '~/plugins/fontawesome.js', // Path to your Font Awesome plugin
+    '~/plugins/fontawesome.js',
   ],
 
-  // Components auto-discovery setup
   components: {
     dirs: [
-      '~/components', // Scan components in this directory
-      // No need to explicitly add '~/assets/icons' here if Font Awesome is used.
-      // If you still have non-Font Awesome SVG components there, you can keep it,
-      // but if you're fully switching to FA, it's redundant.
+      '~/components',
     ]
   },
 
-  // Nuxt App Head configuration
   app: {
     head: {
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
-      title: 'TEN - Startup Growth Tools', // Add a default title
+      title: 'TEN - Startup Growth Tools',
       htmlAttrs: {
-        lang: 'en' // Specify language for accessibility
+        lang: 'en'
       },
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -55,16 +46,108 @@ export default defineNuxtConfig({
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'
         },
-        { rel: 'icon', type: 'image/png', href: '/favicon.png' } // Ensure favicon.png is in your `public` directory
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' }
       ]
     }
   },
 
-  // Tailwind CSS configuration
+  pwa: {
+    // MOVE THIS LINE HERE:
+    strategy: 'generateSW', // <--- MOVED THIS LINE HERE
+
+    manifest: {
+      name: 'TEN - Startup Growth Tools',
+      short_name: 'TEN',
+      description: 'Your platform for startup growth and success tools.',
+      theme_color: '#328336',
+      background_color: '#ffffff',
+      display: 'standalone',
+      scope: '/',
+      start_url: '/',
+      icons: [
+        {
+          src: 'pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+        {
+          src: 'pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+        {
+          src: 'pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable',
+        },
+      ],
+    },
+
+    workbox: {
+      // REMOVE THIS LINE: strategy: 'generateSW', // <--- REMOVED FROM HERE
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,json}'],
+
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'google-fonts-cache',
+            expiration: {
+              maxEntries: 10,
+              maxAgeSeconds: 60 * 60 * 24 * 365,
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'gstatic-fonts-cache',
+            expiration: {
+              maxEntries: 10,
+              maxAgeSeconds: 60 * 60 * 24 * 365,
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /^https:\/\/ten-be\.koyeb\.app\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24,
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+      ],
+    },
+
+    client: {
+      installPrompt: true,
+      registerPlugin: true,
+    },
+
+    devOptions: {
+      enabled: true,
+      type: 'module',
+    },
+  },
+
   tailwindcss: {
-    viewer: false, // Disables the Tailwind CSS viewer in development
+    viewer: false,
     config: {
-      // Ensure content paths are correct and comprehensive
       content: [
         './components/**/*.{js,vue,ts}',
         './layouts/**/*.vue',
@@ -72,18 +155,13 @@ export default defineNuxtConfig({
         './plugins/**/*.{js,ts}',
         './nuxt.config.{js,ts}',
         './app.vue',
-        // If you remove `~/assets/icons` from `components.dirs`, this line can be removed too
-        // './assets/icons/**/*.vue',
         './app.config.{js,ts}',
         './error.vue',
-        './content/**/*.md', // Good to keep if you might use @nuxt/content
-        // Add any other specific files or directories where Tailwind classes might be used
-        // e.g., if you have utility files that generate HTML/classes
+        './content/**/*.md',
       ],
       theme: {
         extend: {
           colors: {
-            // Your custom color palette
             'primary-dark': '#222222',
             'primary-green': '#328336',
             'accent-green': '#64cc4f',
@@ -93,22 +171,20 @@ export default defineNuxtConfig({
             'border-color': '#e5e7eb',
             'card-background': '#ffffff',
             'background': '#fbfbfd',
-            // Added colors for consistency with the new components (optional, but good practice)
-            'indigo-600': '#4f46e5', // For ExitStrategyExplorer
-            'blue-600': '#2563eb',   // For RiskAssessment
-            'purple-600': '#9333ea', // For ReputationAnalysis
-            'orange-600': '#ea580c', // For InvestorMatch
-            'emerald-600': '#059669',// For PitchFeedback
-            'sky-600': '#0284c7',    // For CompetitorRadar
-            'teal-600': '#0d9488',   // For TractionEstimator
-            'rose-600': '#e11d48',   // For LegalAssistance
+            'indigo-600': '#4f46e5',
+            'blue-600': '#2563eb',
+            'purple-600': '#9333ea',
+            'orange-600': '#ea580c',
+            'emerald-600': '#059669',
+            'sky-600': '#0284c7',
+            'teal-600': '#0d9488',
+            'rose-600': '#e11d48',
           }
         }
       }
     }
   },
 
-  // Nitro server configuration
   nitro: {
     compatibility: {
       date: '2025-06-27'
