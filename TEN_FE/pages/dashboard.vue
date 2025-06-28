@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col">
     <!-- Header (Navbar) - Always full width and at the very top -->
-    <header class="bg-white border-b border-gray-200 p-4 flex justify-between items-center shadow-sm sticky top-0 z-40 w-full h-16">
+    <header class="bg-white border-b border-gray-200 p-4 flex justify-between items-center shadow-sm sticky top-0 z-50 w-full h-16">
       <!-- Hamburger Button (always visible) -->
       <button
         class="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring"
@@ -21,22 +21,42 @@
     </header>
 
     <!-- Main Layout Container: Flex for Sidebar and Content -->
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden relative">
+      <!-- Mobile Overlay when sidebar is open -->
+      <div
+        v-if="isSidebarOpen && !isDesktop"
+        class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+        @click="closeSidebar"
+      ></div>
+
       <!-- Sidebar -->
       <aside
         :class="[
-          'flex flex-col bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out',
-          'h-full', // Takes full height of its flex parent
-          isSidebarOpen ? 'w-64' : 'w-20', // Controls width for both mobile and desktop collapsed/open states
+          'flex flex-col bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out z-40',
+          // Mobile behavior - fixed positioning
+          !isDesktop ? [
+            'fixed top-16 left-0 bottom-0 h-full',
+            isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'
+          ] : [
+            // Desktop behavior - relative positioning with proper width
+            'relative h-full',
+            isSidebarOpen ? 'w-64' : 'w-20'
+          ]
         ]"
       >
-        <!-- NEW: Collapsed Sidebar Header - Always visible with large icon -->
+        <!-- Sidebar Header -->
         <div class="p-4 flex items-center justify-center border-b border-gray-200 h-16 bg-white z-10 flex-shrink-0">
           <NuxtLink to="/" class="flex items-center space-x-3">
-            <!-- Large Compass Icon - Always visible in collapsed state -->
+            <!-- Large Compass Icon - Always visible -->
             <font-awesome-icon :icon="['fas', 'compass']" class="w-8 h-8 text-green-600" />
-            <!-- "TEN" text - Only visible when sidebar is open -->
-            <span v-if="isSidebarOpen" class="text-2xl font-extrabold text-gray-800 whitespace-nowrap">
+            <!-- "TEN" text - Visible when sidebar is open -->
+            <span 
+              v-if="isSidebarOpen" 
+              :class="[
+                'text-2xl font-extrabold text-gray-800 whitespace-nowrap transition-opacity duration-300',
+                isSidebarOpen ? 'opacity-100' : 'opacity-0'
+              ]"
+            >
               T<span class="text-green-600">EN</span>
             </span>
           </NuxtLink>
@@ -47,17 +67,25 @@
           <button
             v-for="item in navigationItems"
             :key="item.id"
-            @click="activeTab = item.id"
+            @click="handleTabChange(item.id)"
             :class="[
               'flex items-center p-3 rounded-xl transition-all duration-200 w-full',
-              isSidebarOpen ? 'justify-start space-x-3' : 'justify-center', // Center icons when collapsed, align left when open
+              isSidebarOpen ? 'justify-start space-x-3' : 'justify-center',
               activeTab === item.id
                 ? 'bg-green-100 text-green-800 font-semibold border border-green-300'
                 : 'text-gray-700 hover:bg-gray-100'
             ]"
           >
             <font-awesome-icon :icon="item.icon" class="w-5 h-5 flex-shrink-0" />
-            <span v-if="isSidebarOpen" class="whitespace-nowrap">{{ item.label }}</span>
+            <span 
+              v-if="isSidebarOpen" 
+              :class="[
+                'whitespace-nowrap transition-opacity duration-300',
+                isSidebarOpen ? 'opacity-100' : 'opacity-0'
+              ]"
+            >
+              {{ item.label }}
+            </span>
           </button>
         </nav>
       </aside>
@@ -65,32 +93,39 @@
       <!-- Main Content Container -->
       <div
         :class="[
-          'flex flex-col flex-1 transition-all duration-300 ease-in-out',
-          // Apply margin-left to push content away from the sidebar.
-          // The image clearly shows the main content starts further in.
-          // A consistent ml-20 or ml-24 might be appropriate, or dynamic based on sidebar width.
-          // Let's try to match the image's overall offset, which appears larger than just 'w-20'.
-          // Let's assume the collapsed sidebar is w-20, and the content starts with an effective ml-20
-          // (which would then be a total offset of 40px from screen edge to text start).
-          // Or, more simply: just add a consistent large left padding to main content.
+          'flex flex-col flex-1 transition-all duration-300 ease-in-out min-w-0',
+          // Mobile: no margin adjustment, overlay behavior
+          !isDesktop ? 'ml-0' : [
+            // Desktop: margin based on sidebar state
+            isSidebarOpen ? 'ml-0' : 'ml-0'
+          ]
         ]"
       >
-        <main class="flex-1 overflow-y-auto p-4 pt-16 pl-24 pr-4">
-          <!-- Added pl-24 to main: This creates the consistent offset from the left edge of the screen,
-               which corresponds to the right edge of the collapsed sidebar plus some internal padding
-               to match the "Welcome to TEN" text alignment in the image.
-               pr-4 keeps right padding consistent. -->
-          <div class="max-w-6xl mx-auto">
-            <component :is="activeComponent" @change-tab="activeTab = $event" />
+        <!-- Main Content -->
+        <main 
+          :class="[
+            'flex-1 overflow-y-auto transition-all duration-300',
+            // Hide main content on mobile when sidebar is open
+            !isDesktop && isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100',
+            // Padding adjustments
+            'p-4 md:p-6'
+          ]"
+        >
+          <div class="max-w-7xl mx-auto">
+            <component :is="activeComponent" @change-tab="handleTabChange" />
           </div>
         </main>
 
         <!-- Bottom Navigation for Mobile (hidden on desktop) -->
         <BottomNavigation
+          v-if="!isDesktop"
           :active-tab="activeTab"
           :navigation-items="navigationItems"
-          @tab-change="newTab => activeTab = newTab"
-          class="lg:hidden"
+          @tab-change="handleTabChange"
+          :class="[
+            'lg:hidden transition-all duration-300',
+            !isDesktop && isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          ]"
         />
       </div>
     </div>
@@ -115,11 +150,8 @@ import BuzzBuilder from '@/components/BuzzBuilder.vue'
 import TalentNavigator from '@/components/TalentNavigator.vue'
 
 // Reactive state variables
-const isSidebarOpen = ref(false) // Sidebar starts collapsed by default on all views
+const isSidebarOpen = ref(false) // Sidebar starts collapsed by default
 const activeTab = ref('dashboard') // Default active tab
-
-// `isDesktop` flag is used for logic where behavior *differs* between mobile and desktop,
-// but for sidebar open/close, the behavior is now unified via the hamburger.
 const isDesktop = ref(false)
 
 // Function to toggle the sidebar's open/collapsed state
@@ -127,26 +159,44 @@ const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
 }
 
-// Function to check the viewport width and update `isDesktop`
+// Function to close sidebar (for mobile overlay)
+const closeSidebar = () => {
+  if (!isDesktop.value) {
+    isSidebarOpen.value = false
+  }
+}
+
+// Function to handle tab changes
+const handleTabChange = (tabId) => {
+  activeTab.value = tabId
+  // Close sidebar on mobile when navigating
+  if (!isDesktop.value) {
+    isSidebarOpen.value = false
+  }
+}
+
+// Function to check the viewport width and update isDesktop
 const checkViewport = () => {
+  // Using 1024px as desktop breakpoint (lg: in Tailwind)
   isDesktop.value = window.innerWidth >= 1024
 }
 
-// Watcher to manage sidebar state when `isDesktop` changes (e.g., on window resize)
-watch(isDesktop, () => {
-  // Always reset the sidebar to its collapsed state when viewport mode changes.
-  // This ensures consistent behavior regardless of where the user resized from.
-  isSidebarOpen.value = false;
-}, { immediate: true }) // `immediate: true` runs the watcher once on component mount
+// Watcher to manage sidebar state when isDesktop changes
+watch(isDesktop, (newValue, oldValue) => {
+  // Close sidebar when switching to mobile
+  if (!newValue && oldValue) {
+    isSidebarOpen.value = false
+  }
+}, { immediate: true })
 
 // Lifecycle hooks for managing event listeners
 onMounted(() => {
-  checkViewport() // Perform initial check when component mounts
-  window.addEventListener('resize', checkViewport) // Add event listener for window resize
+  checkViewport()
+  window.addEventListener('resize', checkViewport)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', checkViewport) // Clean up event listener on component unmount
+  window.removeEventListener('resize', checkViewport)
 })
 
 // Array defining the navigation items for the sidebar and bottom navigation
@@ -156,7 +206,7 @@ const navigationItems = [
   { id: 'reputation', label: 'Reputation', icon: ['fas', 'comment-dots'] },
   { id: 'investors', label: 'Investor Match', icon: ['fas', 'dollar-sign'] },
   { id: 'pitch', label: 'Pitch Feedback', icon: ['fas', 'file-alt'] },
-  { id: 'competitor', label: 'Competitor Radar', icon: ['fas', 'satellite-dish'] },
+  { id: 'competitor', label: 'Competitor Radar', icon: ['fas', 'bullseye'] },
   { id: 'traction', label: 'Traction Estimator', icon: ['fas', 'chart-line'] },
   { id: 'legal', label: 'Legal Advice', icon: ['fas', 'gavel'] },
   { id: 'exit', label: 'Exit Strategy', icon: ['fas', 'door-open'] },
@@ -179,7 +229,7 @@ const tabComponents = {
   talent: TalentNavigator
 }
 
-// Computed property to dynamically render the active component based on `activeTab`
+// Computed property to dynamically render the active component based on activeTab
 const activeComponent = computed(() => tabComponents[activeTab.value] || Dashboard)
 </script>
 
@@ -188,6 +238,30 @@ const activeComponent = computed(() => tabComponents[activeTab.value] || Dashboa
 html, body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* Prevents horizontal scrollbar if any content accidentally overflows */
+  overflow-x: hidden;
+}
+
+/* Smooth transitions for mobile sidebar */
+@media (max-width: 1023px) {
+  .sidebar-mobile {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-mobile.open {
+    transform: translateX(0);
+  }
+}
+
+/* Ensure proper z-index stacking */
+.z-30 { z-index: 30; }
+.z-40 { z-index: 40; }
+.z-50 { z-index: 50; }
+
+/* Fix for desktop layout to prevent content shift */
+@media (min-width: 1024px) {
+  .main-layout {
+    display: flex;
+    width: 100%;
+  }
 }
 </style>
