@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col">
-    <!-- Header (Navbar) -->
+    <!-- Header (Navbar) - Remains sticky -->
     <header class="bg-white border-b border-gray-200 p-4 flex justify-between items-center shadow-sm sticky top-0 z-50 w-full h-16">
       <button
         class="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring"
@@ -31,15 +31,15 @@
         :class="[
           'flex flex-col bg-white border-r border-gray-200 shadow-lg transition-all duration-300 ease-in-out z-40',
           !isDesktop ? [
-            'fixed top-16 left-0 bottom-0 h-full',
+            'fixed top-16 left-0 bottom-0', // Using flexbox to determine height
             isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'
           ] : [
             'relative h-full',
             isSidebarOpen ? 'w-64' : 'w-20'
           ]
         ]"
-        :style="{ overflowY: isSidebarOpen ? 'auto' : 'hidden' }"
       >
+        <!-- Sidebar Header (fixed) -->
         <div class="p-4 flex items-center justify-center border-b border-gray-200 h-16 bg-white z-10 flex-shrink-0">
           <NuxtLink to="/" class="flex items-center space-x-3">
             <font-awesome-icon :icon="['fas', 'compass']" class="w-8 h-8 text-green-600" />
@@ -54,7 +54,8 @@
             </span>
           </NuxtLink>
         </div>
-        <nav class="flex-1 p-4 space-y-2">
+        <!-- Sidebar Navigation (scrollable) -->
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
             v-for="item in navigationItems"
             :key="item.id"
@@ -135,19 +136,37 @@ const isDesktop = ref(false);
 // Toggle the sidebar
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
-  document.body.style.overflow = isSidebarOpen.value && !isDesktop.value ? 'hidden' : '';
 };
 
 // Close sidebar (for overlay click)
 const closeSidebar = () => {
-  isSidebarOpen.value = false;
-  document.body.style.overflow = '';
+  if (!isDesktop.value) {
+    isSidebarOpen.value = false;
+  }
+};
+
+// Handle tab changes from sidebar or dashboard cards
+const handleTabChange = (tabId) => {
+  activeTab.value = tabId;
+  // Close sidebar on mobile when a tab is selected
+  if (!isDesktop.value) {
+    isSidebarOpen.value = false;
+  }
 };
 
 // Handle viewport changes
 const checkViewport = () => {
   isDesktop.value = window.innerWidth >= 1024;
 };
+
+// Watch for sidebar open on mobile to lock body scroll
+watch([isSidebarOpen, isDesktop], ([newIsSidebarOpen, newIsDesktop]) => {
+  if (!newIsDesktop && newIsSidebarOpen) {
+    document.body.classList.add('body-scroll-lock');
+  } else {
+    document.body.classList.remove('body-scroll-lock');
+  }
+});
 
 // Lifecycle hooks
 onMounted(() => {
@@ -157,6 +176,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkViewport);
+  document.body.classList.remove('body-scroll-lock'); // Cleanup on unmount
 });
 
 // Sidebar navigation items
@@ -192,3 +212,9 @@ const tabComponents = {
 // Active component
 const activeComponent = computed(() => tabComponents[activeTab.value] || Dashboard);
 </script>
+
+<style>
+.body-scroll-lock {
+  overflow: hidden;
+}
+</style>
