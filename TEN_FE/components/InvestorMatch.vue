@@ -46,11 +46,7 @@
         />
       </div>
 
-      <h3 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Risk & Reputation Summaries (Simulated for Demo)</h3>
-      <p class="text-gray-700 mb-4">
-        For a real application, these would ideally come from the <span class="font-semibold">Risk Assessment</span> and <span class="font-semibold">Reputation Analysis</span> tools.
-        For this demo, please provide brief summaries below.
-      </p>
+      <h3 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Risk & Reputation Summaries</h3>
 
       <div>
         <label for="riskProfileSummary" class="block text-sm font-medium text-gray-700 mb-1">Risk Profile Summary <span class="text-red-500">*</span></label>
