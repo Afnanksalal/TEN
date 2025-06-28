@@ -1,4 +1,4 @@
-<!-- components/Dashboard.vue - Mobile-First with SVG Characters -->
+<!-- components/Dashboard.vue - Avatar removed as requested -->
 
 <template>
   <div class="w-full min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/20 relative overflow-hidden">
@@ -12,14 +12,9 @@
     <div class="relative z-10 animate-fade-in w-full">
       <!-- Enhanced Header Section -->
       <div class="text-center mb-6 px-4 pt-4">
-        <!-- Main Character Avatar - Updated to match image -->
-        <div class="flex justify-center mb-4">
-          <div class="relative">
-            
-          </div>
-        </div>
+        <!-- Main welcome avatar has been removed from here -->
 
-        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold mb-3">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold my-4">
           <span class="bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
             Welcome to 
           </span>
@@ -142,6 +137,8 @@
   <!-- Use API Button -->
   <a
     href="https://ten-be.koyeb.app/redoc"
+    target="_blank"
+    rel="noopener noreferrer"
     class="px-4 py-2.5 sm:px-6 sm:py-3 border-2 border-white text-white rounded-lg sm:rounded-xl font-semibold hover:bg-white hover:text-green-600 transition-all duration-300 text-sm sm:text-base"
   >
     Use API
