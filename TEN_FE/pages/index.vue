@@ -155,6 +155,11 @@
         <p class="mt-6 text-sm text-gray-500">© {{ new Date().getFullYear() }} TEN. All rights reserved.</p>
       </div>
     </footer>
+
+    <!-- PWA Install Prompt Component -->
+    <ClientOnly>
+      <PwaInstallPrompt />
+    </ClientOnly>
   </div>
 </template>
 
@@ -162,6 +167,8 @@
 import { useHead } from '#imports'
 import dadqLogo from '@/assets/images/dadq.png'
 import bgGif from '@/assets/images/bgvideo.gif'
+// Import the PwaInstallPrompt component
+import PwaInstallPrompt from '@/components/PwaInstallPrompt.vue'
 
 useHead({
   title: 'TEN – AI Startup Intelligence Platform'
@@ -199,8 +206,14 @@ const features = [
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
 }
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
 .animate-fade-in-up { animation: fadeInUp 0.8s ease-out both; }
 .animate-fade-in-right { animation: fadeInRight 0.8s ease-out both; }
 .animate-float { animation: float 4s ease-in-out infinite; }
 .animate-float-delayed { animation: float-delayed 5s ease-in-out infinite 1s; }
+.animate-float-slow { animation: float-slow 6s ease-in-out infinite 2s; }
 </style>
