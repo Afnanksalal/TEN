@@ -33,10 +33,7 @@
         ></textarea>
       </div>
 
-      <h3 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Optional Context (Simulated for Demo)</h3>
-      <p class="text-gray-700 mb-4">
-        Providing summaries from the <span class="font-semibold">Risk Assessment</span>, <span class="font-semibold">Reputation Analysis</span>, and <span class="font-semibold">Investor Match</span> tools can help tailor the feedback.
-      </p>
+      <h3 class="text-2xl font-semibold text-gray-800 mt-8 mb-4">Optional Context</h3>
 
       <div>
         <label for="riskProfileSummary" class="block text-sm font-medium text-gray-700 mb-1">Risk Profile Summary (Optional)</label>
