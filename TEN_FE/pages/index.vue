@@ -80,7 +80,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div
-              v-for="feature in features.slice(0, 8)" :key="feature.id"
+              v-for="feature in features" :key="feature.id"
               class="bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-white/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
               <div class="flex items-center space-x-4">
@@ -138,7 +138,7 @@
                 <h2 class="text-3xl sm:text-4xl font-extrabold">Ready to Build Your Future?</h2>
                 <p class="mt-4 text-lg opacity-90 max-w-2xl mx-auto">Join thousands of successful founders who started their journey with TEN. Get free access to our core tools today.</p>
                 <NuxtLink to="/dashboard" class="mt-8 inline-block bg-white text-green-600 px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-gray-100 transition duration-300 transform hover:scale-105">
-                    Get Started
+                   Get Started
                 </NuxtLink>
             </div>
         </div>
@@ -177,9 +177,8 @@ const features = [
   { id: 'traction', label: 'Traction Estimator', description: 'Forecast product traction and growth trends.', icon: ['fas', 'chart-line'], iconBg: 'bg-gradient-to-r from-indigo-500 to-indigo-600' },
   { id: 'legal', label: 'Legal Advice', description: 'Get personalized legal assistance for startups.', icon: ['fas', 'gavel'], iconBg: 'bg-gradient-to-r from-gray-600 to-gray-700' },
   { id: 'exit', label: 'Exit Strategy', description: 'Plan your business exit strategy with smart tools.', icon: ['fas', 'door-open'], iconBg: 'bg-gradient-to-r from-teal-500 to-teal-600' },
-  // Add the last two if you want to show all 10 on the landing page
-  // { id: 'buzz', label: 'Buzz Builder', description: 'Generate social media buzz with automated tools.', icon: ['fas', 'bullhorn'], iconBg: 'bg-gradient-to-r from-pink-500 to-pink-600' },
-  // { id: 'talent', label: 'Talent Navigator', description: 'Find the right talent with AI-powered matching.', icon: ['fas', 'users'], iconBg: 'bg-gradient-to-r from-yellow-500 to-yellow-600' },
+  { id: 'buzz', label: 'Buzz Builder', description: 'Generate social media buzz with automated tools.', icon: ['fas', 'bullhorn'], iconBg: 'bg-gradient-to-r from-pink-500 to-pink-600' },
+  { id: 'talent', label: 'Talent Navigator', description: 'Find the right talent with AI-powered matching.', icon: ['fas', 'users'], iconBg: 'bg-gradient-to-r from-yellow-500 to-yellow-600' },
 ];
 </script>
 
