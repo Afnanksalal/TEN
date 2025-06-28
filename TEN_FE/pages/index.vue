@@ -110,7 +110,7 @@
                     <div class="mt-4 flex items-center">
                         <img src="https://i.pravatar.cc/150?img=11" alt="Avatar" class="w-12 h-12 rounded-full mr-4"/>
                         <div>
-                            <p class="font-bold">Sarah Chen</p>
+                            <p class="font-bold">David Rodriguez</p>
                             <p class="text-sm text-gray-500">CEO, InnovateTech</p>
                         </div>
                     </div>
@@ -120,7 +120,7 @@
                     <div class="mt-4 flex items-center">
                         <img src="https://i.pravatar.cc/150?img=32" alt="Avatar" class="w-12 h-12 rounded-full mr-4"/>
                         <div>
-                            <p class="font-bold">David Rodriguez</p>
+                            <p class="font-bold">Sarah Chen</p>
                             <p class="text-sm text-gray-500">Founder, Healthify</p>
                         </div>
                     </div>
