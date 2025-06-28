@@ -1,12 +1,12 @@
 <template>
-  <div class="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto my-8">
-    <h2 class="text-4xl font-extrabold text-gray-900 mb-4 text-center">Competitor Radar</h2>
-    <p class="text-lg text-gray-700 mb-8 text-center">
+  <div class="p-4 sm:p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto my-8">
+    <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4 text-center">Competitor Radar</h2>
+    <p class="text-md sm:text-lg text-gray-700 mb-8 text-center">
       Track key competitors and identify emerging market trends.
     </p>
 
-    <form @submit.prevent="getCompetitorRadar" class="space-y-6 mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
-      <h3 class="text-2xl font-semibold text-gray-800 mb-4">Your Startup's Profile</h3>
+    <form @submit.prevent="getCompetitorRadar" class="space-y-6 mb-8 p-4 sm:p-6 border border-gray-200 rounded-lg bg-gray-50">
+      <h3 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Your Startup's Profile</h3>
 
       <!-- Input Fields -->
       <div>
@@ -66,53 +66,56 @@
       <span class="block sm:inline ml-2">{{ error }}</span>
     </div>
 
-    <div v-if="competitorOutput" class="result-section p-6 border border-gray-200 rounded-lg bg-gray-50">
-      <h3 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Competitor Intelligence for {{ competitorOutput.startup_name }}</h3>
+    <div v-if="competitorOutput" class="result-section p-4 sm:p-6 border border-gray-200 rounded-lg bg-gray-50">
+      <h3 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-6 text-center">Competitor Intelligence for {{ competitorOutput.startup_name }}</h3>
 
       <div v-if="competitorOutput.tracked_competitors && competitorOutput.tracked_competitors.length > 0" class="space-y-6 mb-8">
-        <div v-for="competitor in competitorOutput.tracked_competitors" :key="competitor.name" class="p-6 bg-white border border-sky-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex justify-between items-start mb-4">
-            <div>
-              <h4 class="text-2xl font-bold text-sky-700 mb-1">{{ competitor.name }}</h4>
-              <a v-if="competitor.website" :href="competitor.website" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium">
+        <!-- Result Card Start -->
+        <div v-for="competitor in competitorOutput.tracked_competitors" :key="competitor.name" class="p-4 sm:p-6 bg-white border border-sky-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <!-- Card Header - Modified for Responsiveness -->
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-4">
+            <div class="min-w-0"> <!-- Added min-w-0 to allow text wrapping within flex container -->
+              <h4 class="text-xl sm:text-2xl font-bold text-sky-700 mb-1 break-words">{{ competitor.name }}</h4>
+              <a v-if="competitor.website" :href="competitor.website" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sky-600 hover:text-sky-800 text-sm font-medium break-all">
                 {{ competitor.website }}
-                <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                <svg class="w-3 h-3 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
               </a>
             </div>
-            <div :class="hiringSurgeClass(competitor.hiring_surge_indication)" class="text-sm font-semibold px-3 py-1 rounded-full capitalize">
+            <div :class="hiringSurgeClass(competitor.hiring_surge_indication)" class="text-sm font-semibold px-3 py-1 rounded-full capitalize self-start sm:self-center flex-shrink-0">
               Hiring: {{ competitor.hiring_surge_indication }}
             </div>
           </div>
-
-          <p v-if="competitor.product_description" class="text-gray-700 mb-3"><span class="font-semibold">Product:</span> {{ competitor.product_description }}</p>
-          <p v-if="competitor.value_proposition" class="text-gray-700 mb-3"><span class="font-semibold">Value Prop:</span> {{ competitor.value_proposition }}</p>
-          <p v-if="competitor.target_market" class="text-gray-700 mb-3"><span class="font-semibold">Target Market:</span> {{ competitor.target_market }}</p>
-          <p v-if="competitor.overall_summary" class="text-gray-700 mb-4"><span class="font-semibold">Summary:</span> {{ competitor.overall_summary }}</p>
+          <!-- Card Body - Added break-words to paragraphs -->
+          <p v-if="competitor.product_description" class="text-gray-700 mb-3 break-words"><span class="font-semibold">Product:</span> {{ competitor.product_description }}</p>
+          <p v-if="competitor.value_proposition" class="text-gray-700 mb-3 break-words"><span class="font-semibold">Value Prop:</span> {{ competitor.value_proposition }}</p>
+          <p v-if="competitor.target_market" class="text-gray-700 mb-3 break-words"><span class="font-semibold">Target Market:</span> {{ competitor.target_market }}</p>
+          <p v-if="competitor.overall_summary" class="text-gray-700 mb-4 break-words"><span class="font-semibold">Summary:</span> {{ competitor.overall_summary }}</p>
 
           <div v-if="competitor.funding_rounds && competitor.funding_rounds.length > 0" class="mb-4">
             <h5 class="font-semibold text-gray-800 mb-2">Recent Funding:</h5>
             <ul class="list-disc list-inside text-gray-700 pl-4 space-y-1">
-              <li v-for="(round, idx) in competitor.funding_rounds" :key="idx">{{ round }}</li>
+              <li v-for="(round, idx) in competitor.funding_rounds" :key="idx" class="break-words">{{ round }}</li>
             </ul>
           </div>
 
           <div v-if="competitor.press_mentions_summary && competitor.press_mentions_summary.length > 0">
             <h5 class="font-semibold text-gray-800 mb-2">Recent Press & News:</h5>
             <ul class="list-disc list-inside text-gray-700 pl-4 space-y-1">
-              <li v-for="(mention, idx) in competitor.press_mentions_summary" :key="idx">{{ mention }}</li>
+              <li v-for="(mention, idx) in competitor.press_mentions_summary" :key="idx" class="break-words">{{ mention }}</li>
             </ul>
           </div>
         </div>
+        <!-- Result Card End -->
       </div>
       <p v-else class="text-center text-gray-600 italic mb-8">
         No specific competitors tracked or identified based on the provided information.
       </p>
 
       <!-- General Market Trends -->
-      <div v-if="competitorOutput.general_market_trends && competitorOutput.general_market_trends.length > 0" class="mt-6 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-        <h4 class="text-2xl font-semibold text-gray-800 mb-4 text-center">General Market Trends</h4>
+      <div v-if="competitorOutput.general_market_trends && competitorOutput.general_market_trends.length > 0" class="mt-6 p-4 sm:p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <h4 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 text-center">General Market Trends</h4>
         <ul class="list-disc list-inside text-gray-700 space-y-2 pl-4">
-          <li v-for="(trend, index) in competitorOutput.general_market_trends" :key="index">{{ trend }}</li>
+          <li v-for="(trend, index) in competitorOutput.general_market_trends" :key="index" class="break-words">{{ trend }}</li>
         </ul>
       </div>
 
